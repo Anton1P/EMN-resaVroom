@@ -90,16 +90,25 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       // Lors de la première connexion, ajouter les infos utilisateur au token
       if (user) {
-        token.entraId = (user as { entraId: string }).entraId;
+        const entraId = (user as { entraId: string }).entraId;
+        token.entraId = entraId;
         token.email = user.email;
         token.name = user.name;
+        
+        // Vérifier le statut administrateur à la connexion
+        // La fonction isAdmin est définie plus bas dans ce fichier
+        const admin = await prisma.admin.findUnique({
+          where: { userEntraId: entraId },
+        });
+        token.isAdmin = admin !== null;
       }
       return token;
     },
     async session({ session, token }) {
-      // Exposer l'entraId dans la session côté client
+      // Exposer l'entraId et le statut admin dans la session côté client
       if (session.user) {
-        (session.user as { entraId: string }).entraId = token.entraId as string;
+        (session.user as any).entraId = token.entraId as string;
+        (session.user as any).isAdmin = token.isAdmin as boolean;
       }
       return session;
     },

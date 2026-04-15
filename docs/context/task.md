@@ -1,7 +1,7 @@
 # Suivi d'avancement — ResaVroom
 
-> **Dernière mise à jour :** 2026-04-15 — Phase 4 terminée  
-> **Phase courante :** En attente de la Phase 5 (UI : Design System + Layout)
+> **Dernière mise à jour :** 2026-04-15 — Phase 5 terminée  
+> **Phase courante :** En attente de la Phase 6 (UI : Dashboard)
 
 ---
 
@@ -14,7 +14,7 @@
 | **2** | Authentification | ✅ Terminée |
 | **3** | Services métier (Core Logic) | ✅ Terminée |
 | **4** | API Routes | ✅ Terminée |
-| **5** | UI : Design System + Layout | ⏳ À faire |
+| **5** | UI : Design System + Layout | ✅ Terminée |
 | **6** | UI : Dashboard | ⏳ À faire |
 | **7** | UI : Création de trajet | ⏳ À faire |
 | **8** | UI : Détail + Liste + Calendrier | ⏳ À faire |
@@ -160,13 +160,19 @@
 
 ---
 
-## Phase 5 — UI : Design System + Layout ⏳
+## Phase 5 — UI : Design System + Layout ✅
 
-**Tâches à faire :**
-- [ ] `src/app/globals.css` — Variables CSS, design tokens
-- [ ] `src/app/layout.tsx` — Layout racine avec providers
-- [ ] `src/components/layout/Navbar.tsx` — Navigation responsive
-- [ ] Composants UI : Button, Card, Badge, Input, Select, Modal
+**Tâches réalisées :**
+- [x] `src/app/globals.css` — Variables CSS augmentées, design tokens (Glassmorphism, animations)
+- [x] Composants UI (`Button`, `Card`, `Badge`, `Input`, `Select`, `Modal`) avec styles riches
+- [x] CSS dédié aux composants (`ui.css`)
+- [x] `src/components/layout/Navbar.tsx` — Navigation responsive connectée à la session et à `isAdmin`
+- [x] `src/app/layout.tsx` — Layout racine mis à jour avec les nouveaux styles et la navbar
+- [x] Extension des types NextAuth (`entraId`, `isAdmin`) pour synchronisation front/back
+
+**Critères validés :**
+- [x] Modèles UI indépendants (0 erreur TypeScript)
+- [x] Le dev server renvoie 200 avec la nouvelle Navbar intégrée.
 
 ---
 

@@ -5,37 +5,61 @@
 /* ══════════════════════════════════════════════ */
 
 :root {
-  /* Couleurs principales */
-  --color-primary: hsl(220, 70%, 50%);
-  --color-primary-hover: hsl(220, 70%, 42%);
-  --color-primary-light: hsl(220, 70%, 95%);
+  /* Vibrant & modern Color Palette */
+  --color-primary: hsl(230, 85%, 60%);
+  --color-primary-hover: hsl(230, 85%, 52%);
+  --color-primary-light: hsl(230, 85%, 95%);
+  --color-primary-alpha: hsla(230, 85%, 60%, 0.15);
 
-  /* Couleurs de statut */
-  --color-success: hsl(145, 65%, 42%);
-  --color-warning: hsl(38, 92%, 50%);
-  --color-danger: hsl(0, 72%, 51%);
-  --color-info: hsl(200, 80%, 50%);
+  --color-secondary: hsl(280, 75%, 60%);
+  --color-accent: hsl(340, 80%, 55%);
 
-  /* Couleurs neutres */
-  --color-background: hsl(220, 14%, 96%);
+  /* Status Colors */
+  --color-success: hsl(150, 75%, 45%);
+  --color-success-bg: hsl(150, 75%, 95%);
+  --color-warning: hsl(40, 95%, 55%);
+  --color-warning-bg: hsl(40, 95%, 95%);
+  --color-danger: hsl(350, 85%, 55%);
+  --color-danger-bg: hsl(350, 85%, 95%);
+  --color-info: hsl(200, 90%, 55%);
+  --color-info-bg: hsl(200, 90%, 95%);
+
+  /* Neutrals & Backgrounds (Sleek light mode) */
+  --color-background: hsl(225, 20%, 98%);
   --color-surface: #ffffff;
-  --color-text: hsl(220, 15%, 15%);
-  --color-text-secondary: hsl(220, 10%, 45%);
-  --color-border: hsl(220, 13%, 88%);
+  --color-text: hsl(225, 30%, 15%);
+  --color-text-secondary: hsl(225, 15%, 45%);
+  --color-text-tertiary: hsl(225, 10%, 65%);
+  --color-border: hsl(225, 20%, 90%);
+  --color-border-hover: hsl(225, 25%, 80%);
 
-  /* Typographie */
-  --font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
+  /* Typography */
+  --font-family: var(--font-inter), "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  /* Radii */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
 
-  /* Espacements */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Premium Shadows */
+  --shadow-xs: 0 2px 4px rgba(20, 20, 40, 0.04);
+  --shadow-sm: 0 4px 12px rgba(20, 20, 40, 0.06);
+  --shadow-md: 0 10px 30px rgba(20, 20, 40, 0.08);
+  --shadow-lg: 0 20px 40px rgba(20, 20, 40, 0.12);
+  --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.07);
 
-  /* Ombres */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* Glassmorphism Defaults */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-backdrop: blur(12px);
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* ══════════════════════════════════════════════ */
@@ -258,4 +282,69 @@ a:hover {
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 1.5rem;
+}
+
+/* ══════════════════════════════════════════════ */
+/* UTILITY CLASSES & ANIMATIONS                   */
+/* ══════════════════════════════════════════════ */
+
+/* Glassmorphism Container */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  border-radius: var(--radius-lg);
+}
+
+/* Base Layout Config */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Generic Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal);
+}
+
+.animate-slide-up {
+  animation: slideUp var(--transition-normal);
 }
