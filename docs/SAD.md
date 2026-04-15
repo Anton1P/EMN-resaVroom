@@ -1879,11 +1879,59 @@ Toutes les pages admin sont dans le layout `/admin/layout.tsx` qui vérifie le r
 3. Configurer `tsconfig.json` avec les alias `@/` → `src/`.
 4. Créer le fichier `.env.example` avec toutes les variables.
 5. Créer la structure de dossiers vide (sans contenu).
+6. Créer/mettre à jour le fichier `.gitignore` à la racine du projet avec le contenu suivant :
+   ```gitignore
+   # === Dépendances ===
+   node_modules/
+   .pnp
+   .pnp.js
+
+   # === Next.js ===
+   /.next/
+   /out/
+   /build
+   next-env.d.ts
+
+   # === Environnement (SECRETS — NE JAMAIS COMMITER) ===
+   .env
+   .env.local
+   .env.development.local
+   .env.test.local
+   .env.production.local
+
+   # === Vercel ===
+   .vercel
+
+   # === Debug ===
+   npm-debug.log*
+   yarn-debug.log*
+   yarn-error.log*
+
+   # === TypeScript ===
+   *.tsbuildinfo
+
+   # === OS ===
+   .DS_Store
+   Thumbs.db
+
+   # === IDE ===
+   .idea/
+   .vscode/
+   *.swp
+   *.swo
+
+   # === Tests ===
+   /coverage
+   ```
+
+   > **IMPORTANT :** Le dossier `prisma/migrations/` ne doit PAS être ignoré. Les fichiers de migration doivent être commités pour assurer la reproductibilité du schéma de données.
 
 **Critères de validation :**
 - [ ] `npm run dev` démarre sans erreur.
 - [ ] La page par défaut de Next.js s'affiche à `http://localhost:3000`.
 - [ ] Tous les packages sont installés (`node_modules` existe).
+- [ ] Le fichier `.gitignore` existe et contient au minimum : `node_modules/`, `.next/`, `.env.local`, `.vercel`.
+- [ ] Le fichier `.env.local` n'est PAS suivi par git (vérifier avec `git status`).
 
 ---
 

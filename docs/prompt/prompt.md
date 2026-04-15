@@ -52,6 +52,14 @@ Après avoir terminé une phase :
 - Gestion d'erreurs systématique : chaque API route retourne des codes HTTP appropriés et des messages d'erreur explicites.
 - Pas de données en dur : les constantes vont dans `lib/utils/constants.ts`, les paramètres configurables dans la table `app_settings`.
 
+### Règle 5 — Git et sécurité
+
+- Le projet utilise **Git** (déjà initialisé). Ne réinitialise jamais le dépôt.
+- Le `.gitignore` doit être créé/mis à jour dès la Phase 0 selon le contenu spécifié dans le SAD.
+- **Ne JAMAIS commiter** de fichiers contenant des secrets (`.env.local`, `.env`, clés API, tokens). Vérifie que le `.gitignore` les exclut AVANT tout commit.
+- Les fichiers `prisma/migrations/` DOIVENT être commités (nécessaires pour reproduire le schéma).
+- Le dossier `docs/` est déjà commité et doit le rester.
+
 ---
 
 ## Gestion des erreurs et problèmes
