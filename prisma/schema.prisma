@@ -1,0 +1,206 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ══════════════════════════════════════════════
+// ENUMS
+// ══════════════════════════════════════════════
+
+enum VehicleStatus {
+  AVAILABLE
+  MAINTENANCE
+}
+
+enum TripType {
+  ONE_WAY          // Aller simple : Campus → Campus
+  ROUND_TRIP       // Aller-retour : Campus → Campus → même Campus
+  ROUND_TRIP_OTHER // Aller-retour : Campus → Autre destination → Campus
+}
+
+enum TripStatus {
+  SCHEDULED   // Trajet planifié (futur)
+  CANCELLED   // Trajet annulé (soft delete)
+}
+
+enum PassengerAddedBy {
+  DRIVER // Ajouté manuellement par le conducteur
+  SELF   // L'utilisateur s'est inscrit lui-même
+}
+
+enum AuditAction {
+  TRIP_CREATED
+  TRIP_UPDATED
+  TRIP_CANCELLED
+  TRIP_FORCE_DELETED
+  PASSENGER_ADDED
+  PASSENGER_REMOVED
+  VEHICLE_CREATED
+  VEHICLE_UPDATED
+  VEHICLE_MAINTENANCE_ON
+  VEHICLE_MAINTENANCE_OFF
+  ADMIN_PROMOTED
+  ADMIN_REVOKED
+  SERVICE_ADDED
+  SERVICE_REMOVED
+  SETTINGS_UPDATED
+}
+
+// ══════════════════════════════════════════════
+// MODÈLES
+// ══════════════════════════════════════════════
+
+/// Les 3 campus de référence (Le Havre, Caen, Paris).
+/// Extensible : un admin peut ajouter un campus futur.
+model Campus {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  vehiclesDefault  Vehicle[] @relation("DefaultCampus")
+  tripsOrigin      Trip[]    @relation("TripOrigin")
+  tripsDestination Trip[]    @relation("TripDestination")
+  tripsReturn      Trip[]    @relation("TripReturn")
+
+  @@map("campuses")
+}
+
+/// Les véhicules de la flotte.
+/// `status` : AVAILABLE (normal) ou MAINTENANCE (bloqué par un admin).
+/// `defaultCampusId` : campus de rattachement initial du véhicule.
+model Vehicle {
+  id              String        @id @default(cuid())
+  name            String        // Ex: "Renault Zoé Bleue"
+  licensePlate    String        @unique @map("license_plate")
+  seats           Int           @default(5) // Total places (conducteur inclus)
+  status          VehicleStatus @default(AVAILABLE)
+  defaultCampusId String        @map("default_campus_id")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  defaultCampus Campus @relation("DefaultCampus", fields: [defaultCampusId], references: [id])
+  trips         Trip[]
+
+  @@map("vehicles")
+}
+
+/// Un trajet (réservation).
+/// Statut dérivé par le temps : 
+///   - SCHEDULED + now < departure_time → "Planifié"
+///   - SCHEDULED + departure_time ≤ now < end_time → "En cours"
+///   - SCHEDULED + now ≥ end_time → "Terminé"
+///   - CANCELLED → "Annulé"
+/// Où end_time = estimated_return_arrival_time ?? estimated_arrival_time
+model Trip {
+  id                         String     @id @default(cuid())
+  vehicleId                  String     @map("vehicle_id")
+  driverEntraId              String     @map("driver_entra_id")
+  driverEmail                String     @map("driver_email")
+  driverDisplayName          String     @map("driver_display_name")
+  type                       TripType
+  originCampusId             String     @map("origin_campus_id")
+  destinationCampusId        String?    @map("destination_campus_id")      // null si ROUND_TRIP_OTHER
+  destinationOtherLabel      String?    @map("destination_other_label")    // "Rouen" si Autre
+  destinationOtherLat        Float?     @map("destination_other_lat")
+  destinationOtherLng        Float?     @map("destination_other_lng")
+  returnCampusId             String?    @map("return_campus_id")           // Campus de retour
+  departureTime              DateTime   @map("departure_time")
+  estimatedArrivalTime       DateTime   @map("estimated_arrival_time")
+  returnDepartureTime        DateTime?  @map("return_departure_time")     // null si ONE_WAY
+  estimatedReturnArrivalTime DateTime?  @map("estimated_return_arrival_time")
+  comment                    String?
+  status                     TripStatus @default(SCHEDULED)
+  createdAt                  DateTime   @default(now()) @map("created_at")
+  updatedAt                  DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  vehicle           Vehicle    @relation(fields: [vehicleId], references: [id])
+  originCampus      Campus     @relation("TripOrigin", fields: [originCampusId], references: [id])
+  destinationCampus Campus?    @relation("TripDestination", fields: [destinationCampusId], references: [id])
+  returnCampus      Campus?    @relation("TripReturn", fields: [returnCampusId], references: [id])
+  passengers        Passenger[]
+
+  // Index pour les requêtes de disponibilité (très fréquentes)
+  @@index([vehicleId, status, departureTime])
+  @@index([driverEntraId, status])
+  @@map("trips")
+}
+
+/// Un passager inscrit sur un trajet.
+/// `addedBy` distingue les passagers ajoutés par le conducteur (DRIVER)
+/// de ceux qui se sont inscrits eux-mêmes (SELF).
+/// Cette distinction conditionne les règles de suppression/modification du trajet.
+model Passenger {
+  id              String           @id @default(cuid())
+  tripId          String           @map("trip_id")
+  userEntraId     String           @map("user_entra_id")
+  userEmail       String           @map("user_email")
+  userDisplayName String           @map("user_display_name")
+  addedBy         PassengerAddedBy @map("added_by")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  // Un utilisateur ne peut être inscrit qu'une seule fois par trajet
+  @@unique([tripId, userEntraId])
+  // Index pour les requêtes de chevauchement
+  @@index([userEntraId])
+  @@map("passengers")
+}
+
+/// Services/groupes autorisés à accéder à l'application.
+model AuthorizedService {
+  id          String   @id @default(cuid())
+  serviceName String   @unique @map("service_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("authorized_services")
+}
+
+/// Administrateurs de l'application.
+model Admin {
+  id          String   @id @default(cuid())
+  userEntraId String   @unique @map("user_entra_id")
+  userEmail   String   @map("user_email")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("admins")
+}
+
+/// Paramètres de configuration de l'application.
+/// Clés attendues :
+///   - "buffer_minutes" : durée du buffer en minutes (défaut: "30")
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+/// Journal d'audit (actions critiques, visible uniquement par les admins).
+model AuditLog {
+  id          String      @id @default(cuid())
+  userEntraId String      @map("user_entra_id")
+  userEmail   String      @map("user_email")
+  action      AuditAction
+  entityType  String      @map("entity_type") // "trip", "vehicle", "admin", "service", "setting"
+  entityId    String      @map("entity_id")
+  details     Json?       // Snapshot avant/après pour traçabilité
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

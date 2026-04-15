@@ -22,7 +22,26 @@ Pour chaque erreur, utiliser ce template :
 
 ## Erreurs résolues
 
-*(Aucune erreur enregistrée pour le moment. Ce fichier sera complété au fur et à mesure du développement.)*
+### [PHASE 1] Prisma 7 — schema.prisma ne supporte plus `url` / `directUrl`
+- **Catégorie :** `ARCHITECTURE`
+- **Fichier(s) :** `prisma/schema.prisma`, `prisma.config.ts`
+- **Erreur :** Prisma 7.7.0 installé automatiquement. Les propriétés `url` et `directUrl` dans le bloc `datasource` sont supprimées → `P1012`.
+- **Tentatives :** Utiliser l'ancien format `url = env("DATABASE_URL")` dans schema.prisma → erreur de validation.
+- **Solution :** Créer `prisma.config.ts` à la racine avec `defineConfig({ datasource: { url: env("DATABASE_URL") } })`. Changer le provider en `"prisma-client"` avec `output` obligatoire. Utiliser `PrismaNeon` adapter (PoolConfig, pas Pool) dans le client. Ajouter `"type": "module"` dans package.json.
+
+### [PHASE 1] Port 5432 bloqué par le firewall entreprise
+- **Catégorie :** `ARCHITECTURE`
+- **Fichier(s) :** `src/lib/prisma.ts`, `prisma/seed.ts`
+- **Erreur :** `P1001: Can't reach database server` — le port 5432 (TCP PostgreSQL) est bloqué par le réseau d'entreprise.
+- **Tentatives :** URL pooler et directe → les deux échouent sur le port 5432.
+- **Solution :** Utiliser le **Neon Serverless Driver** (`@prisma/adapter-neon` + `@neondatabase/serverless` + `ws`) qui passe par **WebSocket port 443**. Migrations via hotspot mobile (1 seule fois), runtime via WebSocket.
+
+### [PHASE 1] PrismaNeon v7 — API changée (PoolConfig au lieu de Pool)
+- **Catégorie :** `CODE`
+- **Fichier(s) :** `prisma/seed.ts`, `src/lib/prisma.ts`
+- **Erreur :** `No database host or connection string was set` — le constructeur `PrismaNeon(pool)` ne fonctionne plus.
+- **Tentatives :** Passer une instance `new Pool({ connectionString })` → même erreur.
+- **Solution :** En Prisma 7, `PrismaNeon` accepte un `PoolConfig` objet : `new PrismaNeon({ connectionString })` au lieu d'une instance Pool.
 
 <!-- 
 Exemple :

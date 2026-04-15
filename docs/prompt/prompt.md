@@ -60,6 +60,26 @@ Après avoir terminé une phase :
 - Les fichiers `prisma/migrations/` DOIVENT être commités (nécessaires pour reproduire le schéma).
 - Le dossier `docs/` est déjà commité et doit le rester.
 
+### Règle 6 — Stratégie de tests et validation
+
+Chaque critère de validation doit être **vérifié concrètement**, pas deviné. Tu disposes de deux outils selon le type de test :
+
+**Terminal (prioritaire) :** Utilise le terminal pour tout ce qui est vérifiable par commande :
+- Exécuter des commandes (`npm run dev`, `npx prisma studio`, `npm run build`).
+- Tester les API routes via `curl` ou des scripts de test.
+- Vérifier le contenu de la base de données.
+- Vérifier que les fichiers existent et sont correctement configurés.
+- Lancer des tests unitaires ou d'intégration.
+
+**Navigateur Chrome (MCP) :** Utilise l'outil MCP navigateur Chrome pour tout ce qui nécessite une vérification visuelle ou interactive :
+- Vérifier qu'une page s'affiche correctement (layout, couleurs, typographie).
+- Tester les interactions utilisateur (clic sur un bouton, soumission de formulaire, navigation).
+- Vérifier le responsive design (redimensionner la fenêtre).
+- Tester les états visuels (loading, empty states, erreurs affichées).
+- Prendre des captures d'écran pour documenter le résultat.
+
+**Règle de priorité :** Toujours essayer le terminal d'abord. Si le test nécessite un rendu visuel ou une interaction UI → utilise le navigateur Chrome.
+
 ---
 
 ## Gestion des erreurs et problèmes
