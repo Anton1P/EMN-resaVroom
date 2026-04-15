@@ -1,7 +1,7 @@
 # Suivi d'avancement — ResaVroom
 
-> **Dernière mise à jour :** 2026-04-15 — Phase 2 terminée  
-> **Phase courante :** En attente de la Phase 3 (Services métier)
+> **Dernière mise à jour :** 2026-04-15 — Phase 3 terminée  
+> **Phase courante :** En attente de la Phase 4 (API Routes)
 
 ---
 
@@ -12,7 +12,7 @@
 | **0** | Initialisation projet | ✅ Terminée |
 | **1** | Base de données | ✅ Terminée |
 | **2** | Authentification | ✅ Terminée |
-| **3** | Services métier (Core Logic) | ⏳ À faire |
+| **3** | Services métier (Core Logic) | ✅ Terminée |
 | **4** | API Routes | ⏳ À faire |
 | **5** | UI : Design System + Layout | ⏳ À faire |
 | **6** | UI : Dashboard | ⏳ À faire |
@@ -96,17 +96,32 @@
 
 ---
 
-## Phase 3 — Services métier ⏳
+## Phase 3 — Services métier ✅
 
-**Tâches à faire :**
-- [ ] `src/lib/utils/dates.ts` — Helpers de dates, calcul buffer
-- [ ] `src/lib/utils/errors.ts` — Classes d'erreurs métier
-- [ ] `src/lib/utils/constants.ts` — Constantes (`MAX_PASSENGERS = 4`)
-- [ ] `src/lib/services/vehicle-service.ts` — Position + disponibilité
-- [ ] `src/lib/services/trip-service.ts` — CRUD trajets + transactions
-- [ ] `src/lib/validators/permission-checker.ts` — Règles de permissions
-- [ ] `src/lib/services/geo-service.ts` — BAN + ORS
-- [ ] `src/lib/services/audit-service.ts` — Journal d'audit
+**Tâches réalisées :**
+- [x] `src/lib/utils/constants.ts` — Constantes métier (MAX_PASSENGERS, TOTAL_SEATS, buffers)
+- [x] `src/lib/utils/errors.ts` — 5 classes d'erreurs (BusinessError, VehicleConflict, DriverOverlap, PassengerOverlap, Permission, Validation)
+- [x] `src/lib/utils/dates.ts` — Helpers dates, buffer configurable, statut d'affichage dérivé (SAD 7.3 + 7.8)
+- [x] `src/lib/services/vehicle-service.ts` — Position dérivée (SAD 7.1), disponibilité (SAD 7.2), suggestions covoiturage, dashboard data
+- [x] `src/lib/services/trip-service.ts` — Création transactionnelle (SAD 7.4), détection conflits (SAD 7.5), annulation, modification horaire, gestion passagers
+- [x] `src/lib/validators/permission-checker.ts` — Règles suppression/modification/inscription/retrait (SAD 7.7)
+- [x] `src/lib/services/geo-service.ts` — BAN autocomplétion + ORS directions + fallback Haversine
+- [x] `src/lib/services/audit-service.ts` — Journalisation avec pagination (hors transaction)
+
+**Critères validés :**
+- [x] `npx tsc --noEmit` → 0 erreurs
+- [x] Dev server démarre sans erreur
+- [x] Auth + Prisma + Neon WebSocket fonctionnels ensemble
+
+**Algorithmes SAD implémentés :**
+- 7.1 Position véhicule (dérivée du dernier trajet)
+- 7.2 Recherche véhicules disponibles (position + chevauchement + maintenance)
+- 7.3 Calcul buffer (configurable via app_settings)
+- 7.4 Création trajet (transaction sérialisée, 3 vérifications)
+- 7.5 Détection conflits (véhicule + conducteur + passagers)
+- 7.6 Classes d'erreurs métier (avec conflictingTripId)
+- 7.7 Règles de permissions (suppression, modification, inscription)
+- 7.8 Statut d'affichage dérivé (scheduled/in_progress/completed/cancelled)
 
 ---
 

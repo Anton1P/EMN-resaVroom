@@ -1,0 +1,470 @@
+// src/lib/services/trip-service.ts — Service CRUD des trajets (SAD 7.4, 7.5)
+// Implémente la création en transaction sérialisée avec vérifications de conflits.
+
+import { prisma } from "@/lib/prisma";
+import { addMinutes, getBufferMinutes } from "@/lib/utils/dates";
+import {
+  VehicleConflictError,
+  DriverOverlapError,
+  PassengerOverlapError,
+  PermissionError,
+} from "@/lib/utils/errors";
+import { findVehicleConflict } from "./vehicle-service";
+import { logAudit } from "./audit-service";
+import { canDeleteTrip, canModifyDepartureTime } from "@/lib/validators/permission-checker";
+import type { Trip, TripType } from "@/generated/prisma/client";
+
+// ══════════════════════════════════════════════
+// TYPES
+// ══════════════════════════════════════════════
+
+export interface CreateTripInput {
+  vehicleId: string;
+  driverEntraId: string;
+  driverEmail: string;
+  driverDisplayName: string;
+  type: TripType;
+  originCampusId: string;
+  destinationCampusId?: string;
+  destinationOtherLabel?: string;
+  destinationOtherLat?: number;
+  destinationOtherLng?: number;
+  returnCampusId?: string;
+  departureTime: Date;
+  estimatedArrivalTime: Date;
+  returnDepartureTime?: Date;
+  estimatedReturnArrivalTime?: Date;
+  comment?: string;
+  passengers?: Array<{
+    userEntraId: string;
+    userEmail: string;
+    userDisplayName: string;
+  }>;
+}
+
+// Type pour le client transactionnel Prisma
+type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+// ══════════════════════════════════════════════
+// DÉTECTION DE CONFLITS PERSONNES (SAD 7.5)
+// ══════════════════════════════════════════════
+
+/**
+ * Cherche un trajet qui chevauche le créneau pour une personne
+ * (en tant que conducteur OU passager).
+ */
+async function findPersonConflict(
+  tx: TransactionClient,
+  userEntraId: string,
+  start: Date,
+  end: Date,
+  excludeTripId?: string
+): Promise<{ id: string } | null> {
+  const baseWhere = {
+    status: { not: "CANCELLED" as const },
+    departureTime: { lt: end },
+    ...(excludeTripId && { id: { not: excludeTripId } }),
+    OR: [
+      { type: "ONE_WAY" as const, estimatedArrivalTime: { gt: start } },
+      {
+        type: { in: ["ROUND_TRIP" as const, "ROUND_TRIP_OTHER" as const] },
+        estimatedReturnArrivalTime: { gt: start },
+      },
+    ],
+  };
+
+  // Vérifier en tant que conducteur
+  const asDriver = await tx.trip.findFirst({
+    where: { ...baseWhere, driverEntraId: userEntraId },
+    select: { id: true },
+  });
+  if (asDriver) return asDriver;
+
+  // Vérifier en tant que passager
+  const asPassenger = await tx.trip.findFirst({
+    where: { ...baseWhere, passengers: { some: { userEntraId } } },
+    select: { id: true },
+  });
+
+  return asPassenger;
+}
+
+// ══════════════════════════════════════════════
+// CRÉATION DE TRAJET (SAD 7.4)
+// ══════════════════════════════════════════════
+
+/**
+ * Crée un trajet dans une transaction sérialisée.
+ *
+ * Étapes :
+ * 1. Re-vérifier la disponibilité du véhicule (race condition)
+ * 2. Vérifier le chevauchement du conducteur
+ * 3. Vérifier le chevauchement de chaque passager
+ * 4. Créer le trajet + les passagers
+ *
+ * Post-transaction : audit + mail (hors transaction).
+ */
+export async function createTrip(input: CreateTripInput): Promise<Trip> {
+  const bufferMinutes = await getBufferMinutes();
+  const endTimeWithBuffer = addMinutes(
+    input.estimatedReturnArrivalTime ?? input.estimatedArrivalTime,
+    bufferMinutes
+  );
+
+  const trip = await prisma.$transaction(
+    async (tx) => {
+      // ── VÉRIF 1 : Véhicule toujours disponible ──
+      const vehicleConflict = await findVehicleConflict(
+        input.vehicleId,
+        input.departureTime,
+        endTimeWithBuffer,
+        tx
+      );
+      if (vehicleConflict) {
+        throw new VehicleConflictError(
+          "Ce véhicule vient d'être réservé par un autre utilisateur.",
+          vehicleConflict.id
+        );
+      }
+
+      // ── VÉRIF 2 : Conducteur pas de chevauchement ──
+      const driverConflict = await findPersonConflict(
+        tx,
+        input.driverEntraId,
+        input.departureTime,
+        endTimeWithBuffer
+      );
+      if (driverConflict) {
+        throw new DriverOverlapError(
+          "Vous avez déjà un trajet sur ce créneau.",
+          driverConflict.id
+        );
+      }
+
+      // ── VÉRIF 3 : Passagers pas de chevauchement ──
+      if (input.passengers) {
+        for (const passenger of input.passengers) {
+          const passengerConflict = await findPersonConflict(
+            tx,
+            passenger.userEntraId,
+            input.departureTime,
+            endTimeWithBuffer
+          );
+          if (passengerConflict) {
+            throw new PassengerOverlapError(
+              `Le passager ${passenger.userDisplayName} a déjà un trajet sur ce créneau.`,
+              passengerConflict.id,
+              passenger.userDisplayName
+            );
+          }
+        }
+      }
+
+      // ── CRÉATION ──
+      return await tx.trip.create({
+        data: {
+          vehicleId: input.vehicleId,
+          driverEntraId: input.driverEntraId,
+          driverEmail: input.driverEmail,
+          driverDisplayName: input.driverDisplayName,
+          type: input.type,
+          originCampusId: input.originCampusId,
+          destinationCampusId: input.destinationCampusId,
+          destinationOtherLabel: input.destinationOtherLabel,
+          destinationOtherLat: input.destinationOtherLat,
+          destinationOtherLng: input.destinationOtherLng,
+          returnCampusId: input.returnCampusId,
+          departureTime: input.departureTime,
+          estimatedArrivalTime: input.estimatedArrivalTime,
+          returnDepartureTime: input.returnDepartureTime,
+          estimatedReturnArrivalTime: input.estimatedReturnArrivalTime,
+          comment: input.comment,
+          passengers: input.passengers
+            ? {
+                createMany: {
+                  data: input.passengers.map((p) => ({
+                    userEntraId: p.userEntraId,
+                    userEmail: p.userEmail,
+                    userDisplayName: p.userDisplayName,
+                    addedBy: "DRIVER" as const,
+                  })),
+                },
+              }
+            : undefined,
+        },
+        include: { passengers: true },
+      });
+    },
+    { isolationLevel: "Serializable" }
+  );
+
+  // ── HORS TRANSACTION : Audit ──
+  await logAudit({
+    userEntraId: input.driverEntraId,
+    userEmail: input.driverEmail,
+    action: "TRIP_CREATED",
+    entityType: "trip",
+    entityId: trip.id,
+    details: { type: input.type, vehicleId: input.vehicleId },
+  });
+
+  return trip;
+}
+
+// ══════════════════════════════════════════════
+// ANNULATION DE TRAJET (soft delete)
+// ══════════════════════════════════════════════
+
+/**
+ * Annule un trajet (soft delete → statut CANCELLED).
+ * Vérifie les permissions avant l'annulation.
+ */
+export async function cancelTrip(
+  tripId: string,
+  userEntraId: string,
+  userEmail: string,
+  userIsAdmin: boolean
+): Promise<Trip> {
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { id: tripId },
+    include: { passengers: true },
+  });
+
+  // Vérification des permissions
+  const permission = canDeleteTrip(trip, userEntraId, userIsAdmin);
+  if (!permission.allowed) {
+    throw new PermissionError(permission.reason!);
+  }
+
+  // Annulation
+  const cancelled = await prisma.trip.update({
+    where: { id: tripId },
+    data: { status: "CANCELLED" },
+    include: { passengers: true },
+  });
+
+  // Audit
+  const action = userIsAdmin ? "TRIP_FORCE_DELETED" : "TRIP_CANCELLED";
+  await logAudit({
+    userEntraId,
+    userEmail,
+    action,
+    entityType: "trip",
+    entityId: tripId,
+    details: {
+      driverEntraId: trip.driverEntraId,
+      passengerCount: trip.passengers.length,
+    },
+  });
+
+  return cancelled;
+}
+
+// ══════════════════════════════════════════════
+// MODIFICATION DE L'HEURE DE DÉPART
+// ══════════════════════════════════════════════
+
+/**
+ * Modifie l'heure de départ d'un trajet.
+ * Recalcule les heures dérivées en décalant du même delta.
+ */
+export async function updateDepartureTime(
+  tripId: string,
+  newDepartureTime: Date,
+  userEntraId: string,
+  userEmail: string,
+  userIsAdmin: boolean
+): Promise<Trip> {
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { id: tripId },
+    include: { passengers: true },
+  });
+
+  // Vérification des permissions
+  const permission = canModifyDepartureTime(trip, userEntraId, userIsAdmin);
+  if (!permission.allowed) {
+    throw new PermissionError(permission.reason!);
+  }
+
+  // Calcul du delta pour décaler toutes les dates
+  const deltaMs = newDepartureTime.getTime() - trip.departureTime.getTime();
+
+  const updated = await prisma.trip.update({
+    where: { id: tripId },
+    data: {
+      departureTime: newDepartureTime,
+      estimatedArrivalTime: new Date(trip.estimatedArrivalTime.getTime() + deltaMs),
+      ...(trip.returnDepartureTime && {
+        returnDepartureTime: new Date(trip.returnDepartureTime.getTime() + deltaMs),
+      }),
+      ...(trip.estimatedReturnArrivalTime && {
+        estimatedReturnArrivalTime: new Date(
+          trip.estimatedReturnArrivalTime.getTime() + deltaMs
+        ),
+      }),
+    },
+  });
+
+  // Audit
+  await logAudit({
+    userEntraId,
+    userEmail,
+    action: "TRIP_UPDATED",
+    entityType: "trip",
+    entityId: tripId,
+    details: {
+      oldDepartureTime: trip.departureTime.toISOString(),
+      newDepartureTime: newDepartureTime.toISOString(),
+    },
+  });
+
+  return updated;
+}
+
+// ══════════════════════════════════════════════
+// GESTION DES PASSAGERS
+// ══════════════════════════════════════════════
+
+/**
+ * Ajoute un passager à un trajet (inscription SELF ou ajout par le conducteur).
+ * Vérifie les chevauchements du passager.
+ */
+export async function addPassenger(
+  tripId: string,
+  userEntraId: string,
+  userEmail: string,
+  userDisplayName: string,
+  addedBy: "SELF" | "DRIVER",
+  actorEntraId: string,
+  actorEmail: string
+): Promise<void> {
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { id: tripId },
+    include: { passengers: true, vehicle: true },
+  });
+
+  const bufferMinutes = await getBufferMinutes();
+  const endTimeWithBuffer = addMinutes(
+    trip.estimatedReturnArrivalTime ?? trip.estimatedArrivalTime,
+    bufferMinutes
+  );
+
+  // Vérifier le chevauchement du passager (dans une transaction)
+  await prisma.$transaction(async (tx) => {
+    const conflict = await findPersonConflict(
+      tx,
+      userEntraId,
+      trip.departureTime,
+      endTimeWithBuffer
+    );
+    if (conflict) {
+      throw new PassengerOverlapError(
+        `${userDisplayName} a déjà un trajet sur ce créneau.`,
+        conflict.id,
+        userDisplayName
+      );
+    }
+
+    await tx.passenger.create({
+      data: {
+        tripId,
+        userEntraId,
+        userEmail,
+        userDisplayName,
+        addedBy,
+      },
+    });
+  });
+
+  // Audit
+  await logAudit({
+    userEntraId: actorEntraId,
+    userEmail: actorEmail,
+    action: "PASSENGER_ADDED",
+    entityType: "trip",
+    entityId: tripId,
+    details: { passengerEntraId: userEntraId, addedBy },
+  });
+}
+
+/**
+ * Retire un passager d'un trajet.
+ */
+export async function removePassenger(
+  tripId: string,
+  passengerEntraId: string,
+  actorEntraId: string,
+  actorEmail: string,
+  actorIsAdmin: boolean
+): Promise<void> {
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { id: tripId },
+  });
+
+  // Un passager peut se retirer lui-même, le conducteur peut retirer ses passagers DRIVER,
+  // un admin peut retirer n'importe qui.
+  const isSelf = passengerEntraId === actorEntraId;
+  const isDriver = trip.driverEntraId === actorEntraId;
+
+  if (!isSelf && !isDriver && !actorIsAdmin) {
+    throw new PermissionError("Vous n'avez pas le droit de retirer ce passager.");
+  }
+
+  await prisma.passenger.deleteMany({
+    where: {
+      tripId,
+      userEntraId: passengerEntraId,
+    },
+  });
+
+  // Audit
+  await logAudit({
+    userEntraId: actorEntraId,
+    userEmail: actorEmail,
+    action: "PASSENGER_REMOVED",
+    entityType: "trip",
+    entityId: tripId,
+    details: { removedPassengerEntraId: passengerEntraId },
+  });
+}
+
+// ══════════════════════════════════════════════
+// LECTURE
+// ══════════════════════════════════════════════
+
+/**
+ * Récupère un trajet par ID avec toutes les relations.
+ */
+export async function getTripById(tripId: string) {
+  return prisma.trip.findUnique({
+    where: { id: tripId },
+    include: {
+      vehicle: true,
+      originCampus: true,
+      destinationCampus: true,
+      returnCampus: true,
+      passengers: true,
+    },
+  });
+}
+
+/**
+ * Récupère les trajets d'un utilisateur (comme conducteur ou passager).
+ */
+export async function getUserTrips(userEntraId: string) {
+  return prisma.trip.findMany({
+    where: {
+      OR: [
+        { driverEntraId: userEntraId },
+        { passengers: { some: { userEntraId } } },
+      ],
+    },
+    include: {
+      vehicle: true,
+      originCampus: true,
+      destinationCampus: true,
+      passengers: true,
+    },
+    orderBy: { departureTime: "desc" },
+  });
+}
