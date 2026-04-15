@@ -1,7 +1,7 @@
 # Suivi d'avancement — ResaVroom
 
-> **Dernière mise à jour :** 2026-04-15 — Phase 5 terminée  
-> **Phase courante :** En attente de la Phase 6 (UI : Dashboard)
+> **Dernière mise à jour :** 2026-04-15 — Phase 6 terminée  
+> **Phase courante :** En attente de la Phase 7 (UI : Création de trajet)
 
 ---
 
@@ -15,7 +15,7 @@
 | **3** | Services métier (Core Logic) | ✅ Terminée |
 | **4** | API Routes | ✅ Terminée |
 | **5** | UI : Design System + Layout | ✅ Terminée |
-| **6** | UI : Dashboard | ⏳ À faire |
+| **6** | UI : Dashboard | ✅ Terminée |
 | **7** | UI : Création de trajet | ⏳ À faire |
 | **8** | UI : Détail + Liste + Calendrier | ⏳ À faire |
 | **9** | Panel Admin | ⏳ À faire |
@@ -176,12 +176,20 @@
 
 ---
 
-## Phase 6 — UI : Dashboard ⏳
+## Phase 6 — UI : Dashboard ✅
 
-**Tâches à faire :**
-- [ ] `src/app/dashboard/page.tsx`
-- [ ] Composants : FleetOverview, VehicleCard, UpcomingTrips
-- [ ] Hook `use-vehicles.ts` (SWR polling 30s)
+**Tâches réalisées :**
+- [x] `src/hooks/use-vehicles.ts` — Hook SWR avec polling 30s.
+- [x] `src/hooks/use-trips.ts` — Hook SWR pour afficher les trajets à venir.
+- [x] Composants spécifiques au dashboard :
+  - `FleetOverview.tsx` : Métriques clés de la flotte en temps réel (Totale, Disponibles, En Trajet, Maintenance).
+  - `VehicleCard.tsx` : Fiche d'information détaillée d'un véhicule (position, statut, capacité, bouton réserver).
+  - `UpcomingTrips.tsx` : Liste ou état vide ("Aucun trajet à venir") des réservations.
+- [x] `src/app/dashboard/page.tsx` — Page assemblant les composants avec rafraîchissement manuel et automatique SWR.
+
+**Critères validés :**
+- [x] Compilation sans erreur (`npx tsc --noEmit`).
+- [x] Dashboard accessible via `/dashboard` et qui interroge les API correctement.
 
 ---
 

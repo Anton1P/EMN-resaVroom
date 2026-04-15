@@ -30,7 +30,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <Navbar />
-          <main className="app-main">
+          <main className="app-main app-container" style={{ paddingTop: '2rem' }}>
             {children}
           </main>
         </Providers>
