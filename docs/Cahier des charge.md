@@ -41,28 +41,46 @@ Interface permettant à un utilisateur de réserver un véhicule en tant que con
 - **Aller-retour vers "Autre" (Campus → Destination libre → Campus de retour) :** Obligatoirement un aller-retour. Pas d'aller simple vers "Autre". Le véhicule est bloqué pour toute la durée. Le campus de retour doit être un des 3 campus de référence.
 
 #### 4.2.2. Destination "Autre"
-- La saisie de la destination utilise une **API cartographique avec autocomplétion** (recherche de ville/adresse).
-- Le système calcule automatiquement le temps de trajet via cette même API.
+- La saisie de la destination utilise une **API cartographique avec autocomplétion** (api-adresse.data.gouv.fr — BAN).
+- Le système calcule automatiquement le temps de trajet via **OpenRouteService** (OSM).
 - **Un trajet "Autre" est obligatoirement un aller-retour** avec retour vers un campus de référence. Le véhicule est inutilisable pendant toute la durée du trajet.
 
 #### 4.2.3. Calcul automatique du temps de trajet
-- **Estimation automatique** de la durée du trajet via une API cartographique externe.
+- **Estimation automatique** de la durée du trajet via OpenRouteService.
 - L'heure d'arrivée est calculée automatiquement en fonction de l'heure de départ et de la durée estimée.
 - Pour les aller-retour : le conducteur déclare l'heure de départ du retour. L'heure d'arrivée du retour est calculée automatiquement.
 - **Fallback :** En cas d'indisponibilité de l'API, saisie manuelle de la durée de trajet par l'utilisateur.
+- **Trafic en temps réel :** Fonctionnalité abandonnée (aucune API gratuite qualitative disponible).
 
-#### 4.2.4. Filtrage et validation
-- Filtrage dynamique lors de la saisie pour ne proposer que les véhicules **réellement disponibles** (croisement du temps, de l'espace et du buffer).
-- Validation des contraintes métier en temps réel lors de la réservation.
-- Messages d'erreurs explicites (ex : "Le véhicule ne sera pas à Paris à cette heure-ci").
+#### 4.2.4. Flux de réservation en 2 phases
+Le processus de réservation est conçu en **deux phases** pour optimiser l'expérience utilisateur :
 
-#### 4.2.5. Zone de commentaire
+**Phase 1 — Recherche et filtrage :**
+1. L'utilisateur renseigne ses critères : campus de départ, destination, type de trajet, date/heure de départ, (heure de retour si aller-retour).
+2. Le système calcule les durées de trajet (API ORS), puis interroge la base pour identifier les **véhicules disponibles** (vérification : pas en maintenance, présent au campus de départ, pas de chevauchement temporel avec buffer).
+3. Seuls les véhicules réellement disponibles sont affichés. Si aucun véhicule n'est disponible, un message clair est affiché.
+4. En parallèle, le système **suggère les trajets existants** correspondant aux critères (covoiturage — suggestion non bloquante).
+
+**Phase 2 — Sélection et validation finale :**
+1. L'utilisateur sélectionne un véhicule parmi ceux disponibles.
+2. (Optionnel) Il ajoute des passagers via une recherche par nom/email.
+3. (Optionnel) Il ajoute un commentaire.
+4. Il confirme la réservation.
+5. Le système effectue une **re-vérification en transaction** (quelqu'un a pu réserver entre-temps), vérifie les chevauchements du conducteur et des passagers, puis crée le trajet.
+
+#### 4.2.5. Messages d'erreur actionnables
+Chaque erreur de validation fournit un **lien direct vers le trajet conflictuel** :
+- **Véhicule pris entre-temps :** "Ce véhicule vient d'être réservé" + bouton "Voir ce trajet" (possibilité de le rejoindre en covoiturage).
+- **Chevauchement conducteur :** "Vous avez déjà un trajet sur ce créneau" + bouton "Voir votre trajet existant".
+- **Chevauchement passager :** "Le passager X a déjà un trajet sur ce créneau" + bouton "Voir le trajet de X".
+
+#### 4.2.6. Zone de commentaire
 - Champ texte libre réservé au conducteur lors de la réservation pour y ajouter des détails sur le trajet.
 
 ### 4.3. Règles de Modification et d'Annulation des Trajets
 
 #### 4.3.1. Ajout de passagers par le conducteur
-- Le conducteur (créateur du trajet) peut **ajouter manuellement des passagers** à son trajet lors de la création ou après.
+- Le conducteur (créateur du trajet) peut **ajouter manuellement des passagers** à son trajet lors de la création ou après, via une recherche par nom ou adresse e-mail dans l'annuaire de l'entreprise.
 
 #### 4.3.2. Suppression d'un trajet
 - **Sans passagers externes :** Le conducteur peut supprimer librement son trajet (même s'il a des passagers qu'il a ajoutés lui-même).
@@ -92,19 +110,21 @@ Fonctionnalités permettant d'optimiser le taux d'occupation des véhicules.
 - **Aucune notification par e-mail** n'est envoyée au conducteur lors du retrait d'un passager.
 
 #### 4.4.4. Suggestion intelligente
-- Lors de la création d'un nouveau trajet, le système doit **suggérer à l'utilisateur de rejoindre un trajet déjà existant** s'il correspond à ses critères (date, lieu, destination proche), de manière non bloquante.
+- Lors de la création d'un nouveau trajet (Phase 1), le système doit **suggérer à l'utilisateur de rejoindre un trajet déjà existant** s'il correspond à ses critères (date, lieu, destination proche), de manière non bloquante.
 
 ### 4.5. Agendas et Suivi
 - **Calendrier par véhicule :** Consultation de l'agenda spécifique d'une voiture avec vue sur les créneaux occupés et libres.
 - **Détails d'un trajet :** Fiche récapitulative affichant le conducteur, les passagers actuels, les horaires, les lieux, le véhicule, le nombre de places restantes, les commentaires, et un bouton pour rejoindre le trajet.
 
 ### 4.6. Notifications (E-mails)
-Système de communication automatisé, limité aux scénarios suivants :
+Système de communication automatisé via **Microsoft Graph API** (`Mail.Send`), limité aux scénarios suivants :
 
 | # | Événement déclencheur | Destinataire(s) |
 |---|----------------------|-----------------|
 | 1 | Trajet créé avec succès | Conducteur (confirmation) |
 | 2 | Trajet supprimé par un administrateur (trajet ayant des passagers) | Conducteur + Tous les passagers |
+
+Les mails sont envoyés depuis une boîte partagée existante de l'entreprise.
 
 ### 4.7. Historique et Audit
 
@@ -119,7 +139,7 @@ Système de communication automatisé, limité aux scénarios suivants :
 ### 4.8. Panneau Administrateur (Panel Admin)
 Interface avec accès restreint pour la gestion systémique.
 - Modification des données : ajout, édition et suppression de trajets et de fiches véhicules.
-- **Gestion de la maintenance :** Possibilité de forcer l'indisponibilité d'un véhicule (ex : amené au garage), bloquant toutes les réservations pour ce véhicule.
+- **Gestion de la maintenance :** Possibilité de forcer l'indisponibilité d'un véhicule (ex : amené au garage), bloquant toutes les réservations pour ce véhicule. Si le véhicule a des réservations futures, l'admin est averti et peut les annuler.
 - **Gestion de la liste blanche :** Ajout/suppression de services autorisés à accéder à l'application.
 - **Gestion des administrateurs :** Promotion/révocation du rôle admin via sélection d'adresses e-mail.
 - **Consultation de l'historique d'audit.**
@@ -154,11 +174,23 @@ L'intelligence de l'application repose sur la stricte application de ces règles
 ## 7. Exigences Non Fonctionnelles et UX
 - **Simplicité et Lisibilité :** L'interface doit privilégier une compréhension immédiate (utilisation de codes couleurs clairs pour les statuts).
 - **Accessibilité :** L'application doit être "responsive" (utilisable sur ordinateur et mobile).
-- **Messages d'erreurs clairs :** L'utilisateur doit comprendre pourquoi une action est refusée (ex : "Le véhicule ne sera pas à Paris à cette heure-ci").
+- **Messages d'erreurs clairs et actionnables :** L'utilisateur doit comprendre pourquoi une action est refusée et disposer d'un lien vers la source du conflit.
 
 ## 8. Stack Technique et Déploiement
-- **Framework :** Next.js en TypeScript (App Router).
+- **Framework :** Next.js (App Router) en TypeScript.
 - **Hébergement :** Vercel.
-- **Base de données :** SharePoint Entreprise (Listes SharePoint via Microsoft Graph API) — intégration dans l'écosystème Microsoft de l'entreprise.
-- **Authentification :** Microsoft Entra ID (Azure AD) via MSAL.
-- **API Cartographique :** Solution gratuite et qualitative pour l'autocomplétion d'adresses et le calcul de temps de trajet. Si aucune solution gratuite ne répond au niveau de qualité requis, la fonctionnalité est dégradée en saisie manuelle.
+- **Base de données :** Neon (PostgreSQL Serverless).
+- **ORM :** Prisma.
+- **Authentification :** Microsoft Entra ID (Azure AD) via NextAuth.js.
+- **Autocomplétion d'adresses :** api-adresse.data.gouv.fr (BAN) — gratuit, illimité, souverain.
+- **Calcul de temps de trajet :** OpenRouteService (OSM) — gratuit, 2000 req/jour.
+- **Envoi de mails :** Microsoft Graph API (permission `Mail.Send`).
+- **Recherche d'utilisateurs :** Microsoft Graph API (permission `User.ReadBasic.All`).
+
+### 8.1. Permissions Microsoft Graph requises
+
+| Permission | Type | Consentement admin | Usage |
+|------------|------|:-:|-------|
+| `User.Read` | Déléguée | Non | Lire le profil de l'utilisateur connecté |
+| `User.ReadBasic.All` | Déléguée | Non | Rechercher des utilisateurs pour l'ajout de passagers |
+| `Mail.Send` | Application | Oui | Envoyer des e-mails depuis la boîte partagée |
