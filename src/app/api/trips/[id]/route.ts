@@ -1,0 +1,110 @@
+// GET /api/trips/[id] — Détail d'un trajet
+// PATCH /api/trips/[id] — Modifier l'heure de départ
+// DELETE /api/trips/[id] — Annuler un trajet
+
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuthSession, handleBusinessError } from "@/lib/api-helpers";
+import { isAdmin } from "@/lib/auth";
+import { getTripById, cancelTrip, updateDepartureTime } from "@/lib/services/trip-service";
+import { getTripDisplayStatus } from "@/lib/utils/dates";
+import { canDeleteTrip, canModifyDepartureTime, canJoinAsPassenger } from "@/lib/validators/permission-checker";
+
+type RouteParams = { params: Promise<{ id: string }> };
+
+// ══════════════════════════════════════════════
+// GET /api/trips/[id]
+// ══════════════════════════════════════════════
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const auth = await requireAuthSession();
+  if ("error" in auth) return auth.error;
+
+  const { id } = await params;
+  const trip = await getTripById(id);
+
+  if (!trip) {
+    return NextResponse.json(
+      { error: "NOT_FOUND", message: "Trajet non trouvé." },
+      { status: 404 }
+    );
+  }
+
+  const userEntraId = auth.session.user.entraId;
+  const userIsAdmin = await isAdmin(userEntraId);
+
+  // Calculer les permissions pour l'utilisateur connecté
+  const permissions = {
+    canDelete: canDeleteTrip(trip, userEntraId, userIsAdmin).allowed,
+    canModifyDeparture: canModifyDepartureTime(trip, userEntraId, userIsAdmin).allowed,
+    canJoinAsPassenger: canJoinAsPassenger(
+      { ...trip, vehicleSeats: trip.vehicle.seats },
+      userEntraId
+    ).allowed,
+  };
+
+  return NextResponse.json({
+    ...trip,
+    displayStatus: getTripDisplayStatus(trip),
+    seatsAvailable: trip.vehicle.seats - 1 - trip.passengers.length,
+    driver: {
+      entraId: trip.driverEntraId,
+      email: trip.driverEmail,
+      displayName: trip.driverDisplayName,
+    },
+    permissions,
+  });
+}
+
+// ══════════════════════════════════════════════
+// PATCH /api/trips/[id]
+// ══════════════════════════════════════════════
+
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const auth = await requireAuthSession();
+  if ("error" in auth) return auth.error;
+
+  const { id } = await params;
+
+  try {
+    const body = await request.json();
+    const userIsAdmin = await isAdmin(auth.session.user.entraId);
+
+    const updated = await updateDepartureTime(
+      id,
+      new Date(body.departureTime),
+      auth.session.user.entraId,
+      auth.session.user.email,
+      userIsAdmin
+    );
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    return handleBusinessError(error);
+  }
+}
+
+// ══════════════════════════════════════════════
+// DELETE /api/trips/[id]
+// ══════════════════════════════════════════════
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const auth = await requireAuthSession();
+  if ("error" in auth) return auth.error;
+
+  const { id } = await params;
+
+  try {
+    const userIsAdmin = await isAdmin(auth.session.user.entraId);
+
+    await cancelTrip(
+      id,
+      auth.session.user.entraId,
+      auth.session.user.email,
+      userIsAdmin
+    );
+
+    return NextResponse.json({ message: "Trajet annulé." });
+  } catch (error) {
+    return handleBusinessError(error);
+  }
+}

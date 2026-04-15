@@ -1,7 +1,7 @@
 # Suivi d'avancement — ResaVroom
 
-> **Dernière mise à jour :** 2026-04-15 — Phase 3 terminée  
-> **Phase courante :** En attente de la Phase 4 (API Routes)
+> **Dernière mise à jour :** 2026-04-15 — Phase 4 terminée  
+> **Phase courante :** En attente de la Phase 5 (UI : Design System + Layout)
 
 ---
 
@@ -13,7 +13,7 @@
 | **1** | Base de données | ✅ Terminée |
 | **2** | Authentification | ✅ Terminée |
 | **3** | Services métier (Core Logic) | ✅ Terminée |
-| **4** | API Routes | ⏳ À faire |
+| **4** | API Routes | ✅ Terminée |
 | **5** | UI : Design System + Layout | ⏳ À faire |
 | **6** | UI : Dashboard | ⏳ À faire |
 | **7** | UI : Création de trajet | ⏳ À faire |
@@ -125,15 +125,38 @@
 
 ---
 
-## Phase 4 — API Routes ⏳
+## Phase 4 — API Routes ✅
 
-**Tâches à faire :**
-- [ ] Routes véhicules (`/api/vehicles`, `/api/vehicles/availability`, `/api/vehicles/[id]`)
-- [ ] Routes trajets (`/api/trips`, `/api/trips/[id]`)
-- [ ] Routes passagers (`/api/trips/[id]/passengers`)
-- [ ] Routes géo (`/api/geo/autocomplete`, `/api/geo/directions`)
-- [ ] Routes utilisateurs (`/api/users/search`)
-- [ ] Routes admin (`/api/admin/admins`, `/api/admin/services`, `/api/admin/settings`, `/api/admin/audit`)
+**Tâches réalisées :**
+- [x] `src/lib/api-helpers.ts` — Helpers partagés (auth session, admin check, error handling)
+- [x] `GET /api/vehicles` — Liste véhicules avec position actuelle et displayStatus
+- [x] `GET /api/vehicles/availability` — Véhicules disponibles + suggestions covoiturage
+- [x] `GET /api/trips` — Liste trajets avec filtres et pagination
+- [x] `POST /api/trips` — Création trajet (transaction sérialisée)
+- [x] `GET /api/trips/[id]` — Détail trajet avec permissions calculées
+- [x] `PATCH /api/trips/[id]` — Modification heure de départ
+- [x] `DELETE /api/trips/[id]` — Annulation (soft delete)
+- [x] `POST /api/trips/[id]/passengers` — Ajout passager (SELF ou DRIVER)
+- [x] `DELETE /api/trips/[id]/passengers/[passengerId]` — Retrait passager
+- [x] `GET /api/geo/autocomplete` — Proxy BAN (villes françaises)
+- [x] `GET /api/geo/directions` — Proxy ORS + fallback Haversine
+- [x] `GET /api/users/search` — Recherche utilisateurs (mode dev : mock)
+- [x] `GET/POST /api/admin/admins` + `DELETE /api/admin/admins/[id]`
+- [x] `GET/POST /api/admin/services` + `DELETE /api/admin/services/[id]`
+- [x] `GET/PATCH /api/admin/settings`
+- [x] `GET /api/admin/audit` — Journal d'audit paginé
+
+**Critères validés :**
+- [x] `npx tsc --noEmit` → 0 erreurs
+- [x] `GET /api/vehicles` → 3 véhicules avec currentCampus + displayStatus
+- [x] `GET /api/admin/settings` (admin) → 200, buffer_minutes=30
+- [x] `GET /api/admin/settings` (non-admin) → 403
+- [x] `GET /api/geo/autocomplete?q=Rouen` → résultats BAN
+- [x] `GET /api/geo/directions` Le Havre→Paris → ~197km, ~2h22
+- [x] `GET /api/users/search?q=jean` → Jean Dupont
+- [x] `GET /api/trips?status=all` → liste vide (pas encore de trajets)
+
+**16 endpoints créés**, tous testés par curl.
 
 ---
 
