@@ -90,7 +90,7 @@
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-xs);
   transition: box-shadow var(--transition-normal), transform var(--transition-normal);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .card-hover:hover {
@@ -117,6 +117,8 @@
   padding: 1rem 1.5rem;
   background: var(--color-background);
   border-top: 1px solid var(--color-border);
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: flex-end;

@@ -79,43 +79,45 @@ export function StepConfirm({ params, vehicle, onBack, onConfirm, isLoading }: S
     <div className="flex flex-col gap-6">
       <Card>
         <CardBody className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-            <Info size={20} className="text-[var(--color-primary)]" />
-            Récapitulatif de la réservation
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+            <Info size={22} color="var(--color-primary)" style={{ display: 'block' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, lineHeight: 1, color: 'var(--color-text)' }}>
+              Récapitulatif de la réservation
+            </h3>
+          </div>
           
-          <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="flex flex-col gap-1">
-              <span className="text-sm text-[var(--color-text-secondary)]">Véhicule</span>
-              <div className="flex items-center gap-2 font-medium">
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>Véhicule</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
                 <Car size={16} /> {vehicle.name} ({vehicle.licensePlate})
               </div>
             </div>
             
-            <div className="flex flex-col gap-1">
-              <span className="text-sm text-[var(--color-text-secondary)]">Destination</span>
-              <div className="flex items-center gap-2 font-medium">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>Destination</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
                 <MapPin size={16} /> {params.destinationText}
               </div>
             </div>
             
-            <div className="flex flex-col gap-1">
-              <span className="text-sm text-[var(--color-text-secondary)]">Départ</span>
-              <div className="flex items-center gap-2 font-medium">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>Départ</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
                 <Calendar size={16} /> {format(params.departureTime, "dd MMM yyyy à HH:mm", { locale: fr })}
               </div>
-              <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
                 <Clock size={14} /> Arrivée estimée : {format(params.estimatedArrivalTime, "HH:mm")}
               </div>
             </div>
 
             {params.isRoundTrip && params.returnDepartureTime && params.estimatedReturnArrivalTime && (
-              <div className="flex flex-col gap-1">
-                <span className="text-sm text-[var(--color-text-secondary)]">Retour</span>
-                <div className="flex items-center gap-2 font-medium">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>Retour</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
                   <Calendar size={16} /> {format(params.returnDepartureTime, "dd MMM yyyy à HH:mm", { locale: fr })}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--color-text-tertiary)' }}>
                   <Clock size={14} /> Fin estimée : {format(params.estimatedReturnArrivalTime, "HH:mm")}
                 </div>
               </div>

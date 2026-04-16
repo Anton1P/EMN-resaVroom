@@ -8,6 +8,7 @@ import { GeoLocation, getDirections } from "@/hooks/use-geo";
 import { DashboardTrip } from "@/hooks/use-trips";
 import { toast } from "sonner";
 import { Search, Map } from "lucide-react";
+import { DatePickerInput } from "@/components/ui/CustomCalendarPicker";
 import "./trips.css";
 
 import useSWR from "swr";
@@ -227,12 +228,11 @@ export function StepSearch({ onResults, initialParams }: StepSearchProps) {
       )}
 
       <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <Input
-          type="date"
+        <DatePickerInput
           label="Date de départ"
           value={departureDate}
-          onChange={(e) => setDepartureDate(e.target.value)}
-          required
+          onChange={setDepartureDate}
+          minDate={new Date().toISOString().split('T')[0]}
         />
         <Input
           type="time"
@@ -266,12 +266,11 @@ export function StepSearch({ onResults, initialParams }: StepSearchProps) {
 
       {isRoundTrip && (
         <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'var(--color-background)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-          <Input
-            type="date"
+          <DatePickerInput
             label="Date de retour"
             value={returnDate}
-            onChange={(e) => setReturnDate(e.target.value)}
-            required
+            onChange={setReturnDate}
+            minDate={departureDate || new Date().toISOString().split('T')[0]}
           />
           <Input
             type="time"
