@@ -60,3 +60,17 @@ Exemple :
 - **Tentatives :** Import depuis `next-auth/providers/azure-ad` → module introuvable.
 - **Solution :** Passage à Auth.js v5 avec le provider `microsoft-entra-id`. SAD mis à jour en conséquence.
 -->
+
+### [PHASE 7] TypeError: Cannot read properties of undefined (reading 'name')
+- **Catégorie :** `CODE`
+- **Fichier(s) :** `src/components/trips/TripWizard.tsx`, `src/components/dashboard/VehicleCard.tsx`
+- **Erreur :** L'API `api/vehicles/availability` retourne des objets allégés sans `currentCampus`. Lors de l'utilisation du composant `VehicleCard` pour les résultats, React crashe en tentant de lire `vehicle.currentCampus.name`.
+- **Tentatives :** Passer `hideActions={true}` à `VehicleCard` dans `TripWizard.tsx` (ne résout pas le problème de la props manquante).
+- **Solution :** Ne pas utiliser `VehicleCard` pour les résultats de recherche. Créer une carte simple en JSX directement dans `TripWizard.tsx` qui lit uniquement `{name, licensePlate, seats}` fournis par `AvailableVehicle`.
+
+### [PHASE 7] Aucun véhicule trouvé (0 résultats)
+- **Catégorie :** `CODE`
+- **Fichier(s) :** `src/components/trips/StepSearch.tsx`
+- **Erreur :** L'API de disponibilité demande de s'assurer que le véhicule est bien au campus de départ. Les ID en dur du Front (`cm0v31nxs...`) ne correspondaient pas aux vrais ID du backend Prisma (`clx...`), l'algorithme ignorait donc tous les véhicules.
+- **Tentatives :** Vérifier les appels d'API externes (ORS) pensant que c'était lié au 405 Method Not Allowed.
+- **Solution :** Création de l'API `/api/campuses` et utilisation dynamique de la liste de campus dans le formulaire de recherche (à la place d'un tableau codé en dur).

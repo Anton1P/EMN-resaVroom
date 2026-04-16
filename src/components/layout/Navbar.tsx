@@ -19,9 +19,18 @@ export function Navbar() {
   const navLinks = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Réserver", href: "/trips/new", icon: Map },
-    { name: "Véhicules", href: "/vehicles", icon: Car },
+    { name: "Mes Trajets", href: "/trips", icon: Car },
     ...(isAdmin ? [{ name: "Admin", href: "/admin", icon: Settings }] : []),
   ];
+
+  // Fonction pour déterminer précisément quel lien est actif
+  const checkIsActive = (href: string) => {
+    if (href === "/trips") {
+      // Actif sur "/trips" ou "/trips/[id]", mais on exclut explicitement "/trips/new"
+      return pathname === "/trips" || (pathname.startsWith("/trips/") && !pathname.startsWith("/trips/new"));
+    }
+    return pathname.startsWith(href);
+  };
 
   return (
     <>
@@ -37,7 +46,7 @@ export function Navbar() {
             {/* Desktop Navigation */}
             <div className="navbar-links desktop-only">
               {navLinks.map((link) => {
-                const isActive = pathname.startsWith(link.href);
+                const isActive = checkIsActive(link.href);
                 const Icon = link.icon;
                 return (
                   <Link
@@ -84,7 +93,7 @@ export function Navbar() {
         <div className="mobile-menu">
           <div className="mobile-menu-links">
             {navLinks.map((link) => {
-              const isActive = pathname.startsWith(link.href);
+              const isActive = checkIsActive(link.href);
               const Icon = link.icon;
               return (
                 <Link

@@ -1,7 +1,7 @@
 # Suivi d'avancement — ResaVroom
 
-> **Dernière mise à jour :** 2026-04-15 — Phase 6 terminée  
-> **Phase courante :** En attente de la Phase 7 (UI : Création de trajet)
+> **Dernière mise à jour :** 2026-04-15 — Phase 7 terminée  
+> **Phase courante :** En attente de la Phase 8 (UI : Détail + Liste + Calendrier)
 
 ---
 
@@ -16,7 +16,7 @@
 | **4** | API Routes | ✅ Terminée |
 | **5** | UI : Design System + Layout | ✅ Terminée |
 | **6** | UI : Dashboard | ✅ Terminée |
-| **7** | UI : Création de trajet | ⏳ À faire |
+| **7** | UI : Création de trajet | ✅ Terminée |
 | **8** | UI : Détail + Liste + Calendrier | ⏳ À faire |
 | **9** | Panel Admin | ⏳ À faire |
 | **10** | Notifications mail | ⏳ À faire |
@@ -193,13 +193,20 @@
 
 ---
 
-## Phase 7 — UI : Création de trajet ⏳
+## Phase 7 — UI : Création de trajet ✅
 
-**Tâches à faire :**
-- [ ] Formulaire Phase 1 (recherche véhicules)
-- [ ] Formulaire Phase 2 (confirmation réservation)
-- [ ] Autocomplétion BAN, suggestion covoiturage
-- [ ] Gestion des erreurs 409 (conflits)
+**Tâches réalisées :**
+- [x] Hook `use-geo.ts` et proxy ORS / BAN intégrés
+- [x] Formulaire `StepSearch.tsx` (calcul d'ETA et recherche des véhicules disponibles et trajets de covoiturage existants)
+- [x] Composant `AddressAutocomplete.tsx`
+- [x] Formulaire `StepConfirm.tsx` (récapitulatif, formulaire passagers multiples, vérification de capacité)
+- [x] Orchestrateur stateful `TripWizard.tsx` gérant la soumission
+- [x] Gestion des conflits (409) et alertes via react-hot-toast/sonner
+- [x] Update du `VehicleCard` pour être réutilisable dans le wizard sans dupliquer les boutons d'action.
+
+**Critères validés :**
+- [x] Compilation TypeScript sans erreur
+- [x] Wizard entièrement fonctionnel encapsulé dans `/trips/new`
 
 ---
 

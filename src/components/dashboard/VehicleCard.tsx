@@ -10,9 +10,10 @@ import "./dashboard.css";
 
 interface VehicleCardProps {
   vehicle: VehicleWithPosition;
+  hideActions?: boolean;
 }
 
-export function VehicleCard({ vehicle }: VehicleCardProps) {
+export function VehicleCard({ vehicle, hideActions = false }: VehicleCardProps) {
   const getStatusBadge = () => {
     switch (vehicle.displayStatus) {
       case "available":
@@ -66,20 +67,22 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         )}
       </CardBody>
       
-      <CardFooter>
-        <div className="vc-actions">
-          <Link href={`/vehicles/${vehicle.id}/calendar`} className="w-full">
-            <Button variant="secondary" className="w-full">
-              Calendrier
-            </Button>
-          </Link>
-          <Link href={`/trips/new?vehicleId=${vehicle.id}&originCampusId=${vehicle.currentCampus.id}`} className="w-full">
-            <Button variant="primary" className="w-full" disabled={vehicle.displayStatus === "maintenance"}>
-              Réserver
-            </Button>
-          </Link>
-        </div>
-      </CardFooter>
+      {!hideActions && (
+        <CardFooter>
+          <div className="vc-actions">
+            <Link href={`/vehicles/${vehicle.id}/calendar`} className="w-full">
+              <Button variant="secondary" className="w-full">
+                Calendrier
+              </Button>
+            </Link>
+            <Link href={`/trips/new?vehicleId=${vehicle.id}&originCampusId=${vehicle.currentCampus.id}`} className="w-full">
+              <Button variant="primary" className="w-full" disabled={vehicle.displayStatus === "maintenance"}>
+                Réserver
+              </Button>
+            </Link>
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }
