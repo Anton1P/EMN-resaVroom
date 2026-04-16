@@ -16,7 +16,7 @@ export function TripCard({ trip }: { trip: DashboardTrip }) {
   const destinationName = trip.destinationCampus?.name || trip.destinationOtherLabel || "Destination inconnue";
 
   return (
-    <Card className="hover-lift" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Card className="hover-lift" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div>
           <Badge variant={trip.status === 'CANCELLED' ? 'danger' : 'info'} style={{ marginBottom: '8px' }}>

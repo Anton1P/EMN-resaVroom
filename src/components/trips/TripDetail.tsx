@@ -43,8 +43,8 @@ export function TripDetail({ trip, currentUserId, onMutate }: { trip: any, curre
 
   return (
     <>
-      <Card style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+      <Card style={{ marginBottom: '24px', padding: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
           <div>
             <Badge variant={trip.status === 'CANCELLED' ? 'danger' : 'info'} style={{ marginBottom: '8px' }}>
               {trip.status === 'CANCELLED' ? 'Annulé' : trip.type === 'ONE_WAY' ? 'Aller simple' : 'Aller-retour'}
@@ -60,7 +60,7 @@ export function TripDetail({ trip, currentUserId, onMutate }: { trip: any, curre
         </div>
 
         {/* Timeline (Frise chronologique) */}
-        <div style={{ padding: '24px', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)', marginBottom: '24px' }}>
+        <div style={{ padding: '32px', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)', marginBottom: '32px' }}>
           <div style={{ display: 'flex', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', border: '3px solid white', zIndex: 1 }} />
