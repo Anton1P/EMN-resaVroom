@@ -7,8 +7,7 @@ import {
   VehicleConflictError,
   DriverOverlapError,
   PassengerOverlapError,
-  PermissionError,
-} from "@/lib/utils/errors";
+  PermissionError,  BusinessError} from "@/lib/utils/errors";
 import { findVehicleConflict } from "./vehicle-service";
 import { logAudit } from "./audit-service";
 import { canDeleteTrip, canModifyDepartureTime } from "@/lib/validators/permission-checker";
@@ -321,8 +320,53 @@ export async function updateDepartureTime(
   return updated;
 }
 
-// ══════════════════════════════════════════════
-// GESTION DES PASSAGERS
+export async function updateTripInfo(
+  tripId: string,
+  data: Partial<CreateTripInput>,
+  actorEntraId: string,
+  actorEmail: string,
+  actorIsAdmin: boolean
+): Promise<Trip> {
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { id: tripId },
+    include: { passengers: true },
+  });
+
+  if (!actorIsAdmin) {
+    throw new PermissionError("Seul un administrateur peut modifier librement toutes les informations d'un trajet.");
+  }
+
+  // Update basic info except IDs
+  const updated = await prisma.trip.update({
+    where: { id: tripId },
+    data: {
+      vehicleId: data.vehicleId !== undefined ? data.vehicleId : undefined,
+      type: data.type !== undefined ? data.type : undefined,
+      originCampusId: data.originCampusId !== undefined ? data.originCampusId : undefined,
+      destinationCampusId: data.destinationCampusId !== undefined ? data.destinationCampusId : undefined,
+      destinationOtherLabel: data.destinationOtherLabel !== undefined ? data.destinationOtherLabel : undefined,
+      destinationOtherLat: data.destinationOtherLat !== undefined ? data.destinationOtherLat : undefined,
+      destinationOtherLng: data.destinationOtherLng !== undefined ? data.destinationOtherLng : undefined,
+      returnCampusId: data.returnCampusId !== undefined ? data.returnCampusId : undefined,
+      departureTime: data.departureTime !== undefined ? data.departureTime : undefined,
+      estimatedArrivalTime: data.estimatedArrivalTime !== undefined ? data.estimatedArrivalTime : undefined,
+      returnDepartureTime: data.returnDepartureTime !== undefined ? data.returnDepartureTime : undefined,
+      estimatedReturnArrivalTime: data.estimatedReturnArrivalTime !== undefined ? data.estimatedReturnArrivalTime : undefined,
+      comment: data.comment !== undefined ? data.comment : undefined,
+    },
+  });
+
+  await logAudit({
+    userEntraId: actorEntraId,
+    userEmail: actorEmail,
+    action: "TRIP_UPDATED",
+    entityType: "trip",
+    entityId: tripId,
+    details: { message: "Admin modified trip details" },
+  });
+
+  return updated;
+}
 // ══════════════════════════════════════════════
 
 /**
@@ -392,7 +436,7 @@ export async function addPassenger(
  */
 export async function removePassenger(
   tripId: string,
-  passengerEntraId: string,
+  passengerId: string,
   actorEntraId: string,
   actorEmail: string,
   actorIsAdmin: boolean
@@ -401,19 +445,27 @@ export async function removePassenger(
     where: { id: tripId },
   });
 
+  const passenger = await prisma.passenger.findUnique({
+    where: { id: passengerId }
+  });
+
+  if (!passenger || passenger.tripId !== tripId) {
+    throw new BusinessError("Passager introuvable sur ce trajet.", "PASSENGER_NOT_FOUND");
+  }
+
   // Un passager peut se retirer lui-même, le conducteur peut retirer ses passagers DRIVER,
   // un admin peut retirer n'importe qui.
-  const isSelf = passengerEntraId === actorEntraId;
-  const isDriver = trip.driverEntraId === actorEntraId;
+  const isSelf = passenger.userEntraId.trim().toLowerCase() === actorEntraId.trim().toLowerCase();
+  const isDriver = trip.driverEntraId.trim().toLowerCase() === actorEntraId.trim().toLowerCase();
 
   if (!isSelf && !isDriver && !actorIsAdmin) {
+    console.error("403 Debug:", { isSelf, isDriver, actorIsAdmin, actorEntraId, passengerUserEntraId: passenger.userEntraId, driverEntraId: trip.driverEntraId });
     throw new PermissionError("Vous n'avez pas le droit de retirer ce passager.");
   }
 
-  await prisma.passenger.deleteMany({
+  await prisma.passenger.delete({
     where: {
-      tripId,
-      userEntraId: passengerEntraId,
+      id: passengerId,
     },
   });
 
@@ -424,7 +476,7 @@ export async function removePassenger(
     action: "PASSENGER_REMOVED",
     entityType: "trip",
     entityId: tripId,
-    details: { removedPassengerEntraId: passengerEntraId },
+    details: { removedPassengerEntraId: passenger.userEntraId },
   });
 }
 

@@ -12,13 +12,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   if ("error" in auth) return auth.error;
 
   const { id: tripId, passengerId } = await params;
+  console.log("DELETE route hit:", tripId, passengerId);
 
   try {
     const userIsAdmin = await isAdmin(auth.session.user.entraId);
 
     await removePassenger(
       tripId,
-      passengerId, // Ici, passengerId = userEntraId du passager
+      passengerId,
       auth.session.user.entraId,
       auth.session.user.email,
       userIsAdmin
