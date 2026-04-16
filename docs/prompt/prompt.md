@@ -80,6 +80,10 @@ Chaque critère de validation doit être **vérifié concrètement**, pas devin�
 
 **Règle de priorité :** Toujours essayer le terminal d'abord. Si le test nécessite un rendu visuel ou une interaction UI → utilise le navigateur Chrome.
 
+### Règle 7 — UI et Composants spécifiques (Design System)
+
+- **Calendrier/Sélecteur de date** : N'utilise **JAMAIS** un simple `<input type="date" />` natif. Tu dois **obligatoirement** utiliser le composant customisé `<DatePickerInput />` (qui encapsule `CustomCalendarPicker`) situé dans `src/components/ui/CustomCalendarPicker.tsx`. Ce composant gère les couleurs, le blocage des dates passées (via la prop `minDate`), et respecte le design system (glassmorphism/cartes).
+
 ---
 
 ## Gestion des erreurs et problèmes

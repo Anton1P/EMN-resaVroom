@@ -197,6 +197,7 @@
 
 **Tâches réalisées :**
 - [x] Hook `use-geo.ts` et proxy ORS / BAN intégrés
+- [x] Implémentation du composant exclusif `CustomCalendarPicker` (`DatePickerInput`) pour le choix des dates (remplace les inputs natifs pour correspondre au Design System).
 - [x] Formulaire `StepSearch.tsx` (calcul d'ETA et recherche des véhicules disponibles et trajets de covoiturage existants)
 - [x] Composant `AddressAutocomplete.tsx`
 - [x] Formulaire `StepConfirm.tsx` (récapitulatif, formulaire passagers multiples, vérification de capacité)

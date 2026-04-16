@@ -1783,8 +1783,11 @@ Composant `TripConfirmForm` (après sélection d'un véhicule) :
 
 #### `/trips` — Recherche de trajets (covoiturage)
 
+**Comportement par défaut :**
+À l'arrivée sur l'url `/trips`, la page affiche **tous les trajets à venir** de la flotte sur l'ensemble de l'application. Tous les filtres (campus, date, etc.) sont par défaut vides, seul le filtre de Statut est implicitement réglé sur "À venir". L'utilisateur peut ensuite remplir les filtres pour affiner sa recherche s'il le souhaite.
+
 **Composants :**
-- **TripFilters** : Filtres (date, campus de départ, statut).
+- **TripFilters** : Filtres (date via `DatePickerInput`, campus de départ, statut).
 - **TripList** : Liste de cartes `TripCard` :
   - Date + horaires
   - Départ → Destination
