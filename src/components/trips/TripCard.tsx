@@ -13,9 +13,7 @@ export function TripCard({ trip }: { trip: DashboardTrip }) {
   const arrivalDate = new Date(trip.estimatedArrivalTime);
   const seatsAvailable = trip.seatsAvailable;
 
-  const destinationName = trip.type === 'ROUND_TRIP_OTHER'
-    ? trip.destinationOtherLabel
-    : trip.destinationCampus?.name;
+  const destinationName = trip.destinationCampus?.name || trip.destinationOtherLabel || "Destination inconnue";
 
   return (
     <Card className="hover-lift" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

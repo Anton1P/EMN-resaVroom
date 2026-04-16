@@ -17,9 +17,7 @@ export function TripDetail({ trip, currentUserId, onMutate }: { trip: any, curre
   const departureDate = new Date(trip.departureTime);
   const arrivalDate = new Date(trip.estimatedArrivalTime);
 
-  const destinationName = trip.type === 'ROUND_TRIP_OTHER'
-    ? trip.destinationOtherLabel
-    : trip.destinationCampus?.name;
+  const destinationName = trip.destinationCampus?.name || trip.destinationOtherLabel || "Destination inconnue";
 
   const handleDelete = async () => {
     if (!trip.permissions.canDelete) {
