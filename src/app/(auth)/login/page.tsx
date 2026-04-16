@@ -2,10 +2,10 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const error = searchParams.get("error");
@@ -26,6 +26,62 @@ export default function LoginPage() {
   };
 
   return (
+    <>
+      {/* Message d'erreur */}
+      {error && (
+        <div className="login-error">
+          {error === "CredentialsSignin"
+            ? "Email ou mot de passe incorrect."
+            : "Une erreur est survenue lors de la connexion."}
+        </div>
+      )}
+
+      {/* Formulaire */}
+      <form onSubmit={handleSubmit} className="login-form">
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <select
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          >
+            <option value="admin@entreprise.fr">
+              👑 Admin Dev (admin@entreprise.fr)
+            </option>
+            <option value="jean.dupont@entreprise.fr">
+              👤 Jean Dupont (jean.dupont@entreprise.fr)
+            </option>
+            <option value="marie.martin@entreprise.fr">
+              👤 Marie Martin (marie.martin@entreprise.fr)
+            </option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="password">Mot de passe</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="dev"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="login-button"
+          disabled={loading}
+        >
+          {loading ? "Connexion en cours..." : "Se connecter"}
+        </button>
+      </form>
+    </>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <div className="login-container">
       <div className="login-card">
         {/* Logo / Titre */}
@@ -34,15 +90,6 @@ export default function LoginPage() {
           <h1>ResaVroom</h1>
           <p>Réservation de véhicules inter-campus</p>
         </div>
-
-        {/* Message d'erreur */}
-        {error && (
-          <div className="login-error">
-            {error === "CredentialsSignin"
-              ? "Email ou mot de passe incorrect."
-              : "Une erreur est survenue lors de la connexion."}
-          </div>
-        )}
 
         {/* Bandeau dev */}
         <div className="login-dev-banner">
@@ -53,54 +100,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Formulaire */}
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <select
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            >
-              <option value="admin@entreprise.fr">
-                👑 Admin Dev (admin@entreprise.fr)
-              </option>
-              <option value="jean.dupont@entreprise.fr">
-                👤 Jean Dupont (jean.dupont@entreprise.fr)
-              </option>
-              <option value="marie.martin@entreprise.fr">
-                👤 Marie Martin (marie.martin@entreprise.fr)
-              </option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="dev"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? "Connexion en cours..." : "Se connecter"}
-          </button>
-        </form>
-
-        {/* Futur bouton Microsoft (commenté) */}
-        {/* <div className="login-divider">
-          <span>ou</span>
-        </div>
-        <button onClick={() => signIn("azure-ad")} className="login-button-microsoft">
-          Se connecter avec Microsoft
-        </button> */}
+        <Suspense fallback={<div>Chargement...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );

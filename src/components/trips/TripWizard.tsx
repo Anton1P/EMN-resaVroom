@@ -51,7 +51,7 @@ export function TripWizard({ initialVehicleId, initialOriginCampusId }: TripWiza
     setStep(2);
   };
 
-  const handleConfirm = async (payload: any) => {
+  const handleConfirm = async (payload: unknown) => {
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/trips", {

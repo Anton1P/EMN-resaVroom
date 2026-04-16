@@ -1,7 +1,7 @@
 # Suivi d'avancement — ResaVroom
 
-> **Dernière mise à jour :** 2026-04-15 — Phase 7 terminée  
-> **Phase courante :** En attente de la Phase 8 (UI : Détail + Liste + Calendrier)
+> **Dernière mise à jour :** 2026-04-16 — Phase 8 terminée
+> **Phase courante :** En attente de la Phase 9 (Panel Admin)
 
 ---
 
@@ -17,7 +17,7 @@
 | **5** | UI : Design System + Layout | ✅ Terminée |
 | **6** | UI : Dashboard | ✅ Terminée |
 | **7** | UI : Création de trajet | ✅ Terminée |
-| **8** | UI : Détail + Liste + Calendrier | ⏳ À faire |
+| **8** | UI : Détail + Liste + Calendrier | ✅ Terminée |
 | **9** | Panel Admin | ⏳ À faire |
 | **10** | Notifications mail | ⏳ À faire |
 | **11** | Polish + Responsive | ⏳ À faire |
@@ -211,13 +211,17 @@
 
 ---
 
-## Phase 8 — UI : Détail + Liste + Calendrier ⏳
+## Phase 8 — UI : Détail + Liste + Calendrier ✅
 
-**Tâches à faire :**
-- [ ] Page détail trajet (`/trips/[id]`)
-- [ ] Page liste trajets (`/trips`) avec filtres
-- [ ] Page calendrier véhicule (`/vehicles/[id]/calendar`)
-- [ ] Actions : rejoindre, se retirer, modifier, supprimer
+**Tâches réalisées :**
+- [x] Page liste trajets (`/trips`) avec filtres
+- [x] Page détail trajet (`/trips/[id]`) avec frise chronologique
+- [x] Page calendrier véhicule (`/vehicles/[id]/calendar`) avec vue hebdo et mois
+- [x] Actions : rejoindre, se retirer, supprimer (modifier dummy ajouté)
+
+**Critères validés :**
+- [x] Compilation TypeScript sans erreur
+- [x] Application des composants UI standards (ex. DatePickerInput)
 
 ---
 

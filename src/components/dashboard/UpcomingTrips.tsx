@@ -21,7 +21,7 @@ export function UpcomingTrips({ trips }: UpcomingTripsProps) {
         <CardBody className="ds-empty-state">
           <Calendar size={48} className="ds-empty-icon" />
           <p className="ds-empty-title">Aucun trajet à venir</p>
-          <p className="ds-empty-desc">Vous n'avez pas de réservations prévues.</p>
+          <p className="ds-empty-desc">Vous n&apos;avez pas de réservations prévues.</p>
           <Link href="/trips/new">
             <Button variant="primary">Réserver un véhicule</Button>
           </Link>
