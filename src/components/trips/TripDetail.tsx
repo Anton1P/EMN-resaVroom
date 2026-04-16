@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { Car, Info, Trash2, Edit } from 'lucide-react';
+import { Car, Info, Trash2, Edit, ArrowRight, ArrowLeftRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -46,9 +46,17 @@ export function TripDetail({ trip, currentUserId, onMutate }: { trip: any, curre
       <Card style={{ marginBottom: '24px', padding: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
           <div>
-            <Badge variant={trip.status === 'CANCELLED' ? 'danger' : 'info'} style={{ marginBottom: '8px' }}>
-              {trip.status === 'CANCELLED' ? 'Annulé' : trip.type === 'ONE_WAY' ? 'Aller simple' : 'Aller-retour'}
-            </Badge>
+            {trip.status === 'CANCELLED' ? (
+              <Badge variant="danger" style={{ marginBottom: '8px' }}>Annulé</Badge>
+            ) : trip.type === 'ONE_WAY' ? (
+              <Badge variant="info" style={{ marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                Aller simple <ArrowRight size={14} />
+              </Badge>
+            ) : (
+              <Badge variant="info" style={{ marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--color-primary)', color: 'white' }}>
+                Aller-retour <ArrowLeftRight size={14} />
+              </Badge>
+            )}
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)' }}>
               {format(departureDate, 'EEEE d MMMM yyyy', { locale: fr })}
             </h2>
@@ -60,21 +68,13 @@ export function TripDetail({ trip, currentUserId, onMutate }: { trip: any, curre
         </div>
 
         {/* Timeline (Frise chronologique) */}
-        <div style={{ padding: '32px', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)', marginBottom: '32px' }}>
+        <div style={{ padding: '32px', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)', marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          {/* Trajet Aller */}
           <div style={{ display: 'flex', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', border: '3px solid white', zIndex: 1 }} />
               <div style={{ width: '2px', height: '60px', backgroundColor: 'var(--color-border)' }} />
               <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: trip.type === 'ONE_WAY' ? 'var(--color-success)' : 'var(--color-text-secondary)', border: '3px solid white', zIndex: 1 }} />
-
-              {trip.type !== 'ONE_WAY' && trip.returnDepartureTime && (
-                <>
-                  <div style={{ width: '2px', height: '60px', backgroundColor: 'var(--color-border)', borderLeft: '2px dashed var(--color-border)', marginLeft: '-2px' }} />
-                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', border: '3px solid white', zIndex: 1 }} />
-                  <div style={{ width: '2px', height: '60px', backgroundColor: 'var(--color-border)' }} />
-                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--color-success)', border: '3px solid white', zIndex: 1 }} />
-                </>
-              )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: '4px', flexGrow: 1 }}>
@@ -82,25 +82,37 @@ export function TripDetail({ trip, currentUserId, onMutate }: { trip: any, curre
                 <span style={{ fontWeight: 700, fontSize: '1.1rem', marginRight: '12px' }}>{format(departureDate, 'HH:mm')}</span>
                 <span style={{ fontSize: '1.1rem', color: 'var(--color-text)' }}>Départ : {trip.originCampus.name}</span>
               </div>
-              <div style={{ height: trip.type !== 'ONE_WAY' ? '76px' : 'auto' }}>
+              <div>
                 <span style={{ fontWeight: 700, fontSize: '1.1rem', marginRight: '12px' }}>{format(arrivalDate, 'HH:mm')}</span>
                 <span style={{ fontSize: '1.1rem', color: 'var(--color-text)' }}>Arrivée : {destinationName}</span>
               </div>
-
-              {trip.type !== 'ONE_WAY' && trip.returnDepartureTime && (
-                <>
-                  <div style={{ height: '76px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '1.1rem', marginRight: '12px' }}>{format(new Date(trip.returnDepartureTime), 'HH:mm')}</span>
-                    <span style={{ fontSize: '1.1rem', color: 'var(--color-text)' }}>Départ retour : {destinationName}</span>
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: 700, fontSize: '1.1rem', marginRight: '12px' }}>{format(new Date(trip.estimatedReturnArrivalTime), 'HH:mm')}</span>
-                    <span style={{ fontSize: '1.1rem', color: 'var(--color-text)' }}>Arrivée retour : {trip.returnCampus?.name}</span>
-                  </div>
-                </>
-              )}
             </div>
           </div>
+
+          {/* Trajet Retour (si applicable) */}
+          {trip.type !== 'ONE_WAY' && trip.returnDepartureTime && trip.estimatedReturnArrivalTime && (
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--color-text-secondary)', border: '3px solid white', zIndex: 1 }} />
+                <div style={{ width: '2px', height: '60px', backgroundColor: 'var(--color-border)', borderLeft: '2px dashed var(--color-border)', marginLeft: '-2px' }} />
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', border: '3px solid white', zIndex: 1 }} />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: '4px', flexGrow: 1 }}>
+                <div style={{ height: '76px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '1.1rem', marginRight: '12px' }}>{format(new Date(trip.returnDepartureTime), 'HH:mm')}</span>
+                  {format(new Date(trip.returnDepartureTime), 'd MMM yyyy', { locale: fr }) !== format(departureDate, 'd MMM yyyy', { locale: fr }) && (
+                    <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-primary)', marginRight: '12px' }}>({format(new Date(trip.returnDepartureTime), 'd MMM', { locale: fr })})</span>
+                  )}
+                  <span style={{ fontSize: '1.1rem', color: 'var(--color-text)' }}>Départ retour : {destinationName}</span>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, fontSize: '1.1rem', marginRight: '12px' }}>{format(new Date(trip.estimatedReturnArrivalTime), 'HH:mm')}</span>
+                  <span style={{ fontSize: '1.1rem', color: 'var(--color-text)' }}>Arrivée retour : {trip.returnCampus?.name}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Conducteur et Commentaires */}

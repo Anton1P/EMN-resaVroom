@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Users, ChevronRight, Car } from 'lucide-react';
+import { Users, ChevronRight, Car, ArrowRight, ArrowLeftRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { DashboardTrip } from '@/hooks/use-trips';
@@ -19,9 +19,17 @@ export function TripCard({ trip }: { trip: DashboardTrip }) {
     <Card className="hover-lift" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div>
-          <Badge variant={trip.status === 'CANCELLED' ? 'danger' : 'info'} style={{ marginBottom: '8px' }}>
-            {trip.status === 'CANCELLED' ? 'Annulé' : trip.type === 'ONE_WAY' ? 'Aller simple' : 'Aller-retour'}
-          </Badge>
+          {trip.status === 'CANCELLED' ? (
+            <Badge variant="danger" style={{ marginBottom: '8px' }}>Annulé</Badge>
+          ) : trip.type === 'ONE_WAY' ? (
+            <Badge variant="info" style={{ marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              Aller simple <ArrowRight size={12} />
+            </Badge>
+          ) : (
+            <Badge variant="info" style={{ marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--color-primary)', color: 'white' }}>
+              Aller-retour <ArrowLeftRight size={12} />
+            </Badge>
+          )}
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-primary)' }}>
             {format(departureDate, 'EEEE d MMMM', { locale: fr })}
           </h3>
@@ -53,6 +61,30 @@ export function TripCard({ trip }: { trip: DashboardTrip }) {
             </div>
           </div>
         </div>
+
+        {/* Trajet Retour (si applicable) */}
+        {trip.type !== 'ONE_WAY' && trip.returnDepartureTime && trip.estimatedReturnArrivalTime && (
+          <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--color-text-secondary)', border: '2px solid white', zIndex: 1 }} />
+              <div style={{ width: '2px', height: '40px', backgroundColor: 'var(--color-border)', borderLeft: '2px dashed var(--color-border)', marginLeft: '-2px' }} />
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', border: '2px solid white', zIndex: 1 }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: '2px' }}>
+              <div>
+                <span style={{ fontWeight: 600, marginRight: '8px' }}>{format(new Date(trip.returnDepartureTime), 'HH:mm')}</span>
+                {format(new Date(trip.returnDepartureTime), 'd MMM', { locale: fr }) !== format(departureDate, 'd MMM', { locale: fr }) && (
+                  <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--color-primary)', marginRight: '8px' }}>({format(new Date(trip.returnDepartureTime), 'd MMM', { locale: fr })})</span>
+                )}
+                <span style={{ color: 'var(--color-text-secondary)' }}>{destinationName}</span>
+              </div>
+              <div>
+                <span style={{ fontWeight: 600, marginRight: '8px' }}>{format(new Date(trip.estimatedReturnArrivalTime), 'HH:mm')}</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>{trip.returnCampus?.name}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Conducteur et Vehicule */}
         <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
