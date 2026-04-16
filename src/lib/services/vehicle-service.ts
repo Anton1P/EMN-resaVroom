@@ -96,11 +96,11 @@ export async function getVehiclePosition(vehicleId: string, atTime: Date): Promi
 
   switch (lastTrip.type) {
     case "ONE_WAY":
-      return lastTrip.destinationCampusId!;
+      return lastTrip.destinationCampusId || lastTrip.originCampusId;
     case "ROUND_TRIP":
       return lastTrip.originCampusId;
     case "ROUND_TRIP_OTHER":
-      return lastTrip.returnCampusId!;
+      return lastTrip.returnCampusId || lastTrip.originCampusId;
   }
 }
 
@@ -109,6 +109,16 @@ export async function getVehiclePosition(vehicleId: string, atTime: Date): Promi
  */
 export async function getVehicleCurrentCampus(vehicleId: string): Promise<Campus> {
   const campusId = await getVehiclePosition(vehicleId, new Date());
+  
+  if (!campusId) {
+    // Sécurité fallback si les données du trajet sont manquantes (cas limite legacy)
+    const vehicle = await prisma.vehicle.findUniqueOrThrow({
+      where: { id: vehicleId },
+      select: { defaultCampusId: true }
+    });
+    return prisma.campus.findUniqueOrThrow({ where: { id: vehicle.defaultCampusId } });
+  }
+
   return prisma.campus.findUniqueOrThrow({ where: { id: campusId } });
 }
 

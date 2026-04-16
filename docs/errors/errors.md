@@ -74,3 +74,10 @@ Exemple :
 - **Erreur :** L'API de disponibilité demande de s'assurer que le véhicule est bien au campus de départ. Les ID en dur du Front (`cm0v31nxs...`) ne correspondaient pas aux vrais ID du backend Prisma (`clx...`), l'algorithme ignorait donc tous les véhicules.
 - **Tentatives :** Vérifier les appels d'API externes (ORS) pensant que c'était lié au 405 Method Not Allowed.
 - **Solution :** Création de l'API `/api/campuses` et utilisation dynamique de la liste de campus dans le formulaire de recherche (à la place d'un tableau codé en dur).
+
+### [PHASE 7] PrismaClientValidationError sur getVehicleCurrentCampus
+- **Catégorie :** `CODE`
+- **Fichier(s) :** `src/lib/services/vehicle-service.ts`, `src/hooks/use-vehicles.ts`
+- **Erreur :** `findUniqueOrThrow` appelé avec `id: null` pour un campus, causant le crash de `/api/vehicles` (500) et une erreur `vehicles.map is not a function` dans le Dashboard.
+- **Tentatives :** Identification en direct à l'aide des logs de trace serveur et console frontend.
+- **Solution :** Ajout d'un fallback sur `defaultCampusId` ou `originCampusId` dans le calcul de position côté service. Ajout d'une vérification `Array.isArray(data)` dans le hook SWR pour éviter le crash UI.

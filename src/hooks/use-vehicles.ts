@@ -28,7 +28,11 @@ export interface VehicleWithPosition {
   } | null;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Erreur serveur");
+  return res.json();
+};
 
 export function useVehicles(options?: { refreshInterval?: number }) {
   const { data, error, isLoading, mutate } = useSWR<VehicleWithPosition[]>(
@@ -40,7 +44,7 @@ export function useVehicles(options?: { refreshInterval?: number }) {
   );
 
   return {
-    vehicles: data || [],
+    vehicles: Array.isArray(data) ? data : [],
     isLoading,
     isError: error,
     mutate,
