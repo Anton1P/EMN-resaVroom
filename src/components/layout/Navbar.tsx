@@ -19,7 +19,7 @@ export function Navbar() {
   const navLinks = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Réserver", href: "/trips/new", icon: Map },
-    { name: "Mes Trajets", href: "/trips", icon: Car },
+    { name: "Trajets", href: "/trips", icon: Car },
     ...(isAdmin ? [{ name: "Admin", href: "/admin", icon: Settings }] : []),
   ];
 

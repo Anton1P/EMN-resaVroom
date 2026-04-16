@@ -17,25 +17,35 @@ export function TripCard({ trip }: { trip: DashboardTrip }) {
 
   return (
     <Card className="hover-lift" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-        <div>
-          {trip.status === 'CANCELLED' ? (
-            <Badge variant="danger" style={{ marginBottom: '8px' }}>Annulé</Badge>
-          ) : trip.type === 'ONE_WAY' ? (
-            <Badge variant="info" style={{ marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              Aller simple <ArrowRight size={12} />
-            </Badge>
-          ) : (
-            <Badge variant="info" style={{ marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--color-primary)', color: 'white' }}>
-              Aller-retour <ArrowLeftRight size={12} />
-            </Badge>
-          )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', gap: '16px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+            {trip.status === 'CANCELLED' ? (
+              <Badge variant="danger">Annulé</Badge>
+            ) : trip.type === 'ONE_WAY' ? (
+              <Badge variant="info" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                Aller simple <ArrowRight size={12} />
+              </Badge>
+            ) : (
+              <Badge variant="info" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--color-primary)', color: 'white' }}>
+                Aller-retour <ArrowLeftRight size={12} />
+              </Badge>
+            )}
+            
+            {trip.status !== 'CANCELLED' && (
+              new Date() > departureDate ? (
+                <Badge style={{ backgroundColor: '#991b1b', color: 'white', borderColor: '#991b1b' }}>Passé</Badge>
+              ) : (
+                <Badge style={{ backgroundColor: '#166534', color: 'white', borderColor: '#166534' }}>À venir</Badge>
+              )
+            )}
+          </div>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-primary)' }}>
             {format(departureDate, 'EEEE d MMMM', { locale: fr })}
           </h3>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <Badge variant={seatsAvailable > 0 ? 'success' : 'warning'}>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <Badge variant={seatsAvailable > 0 ? 'success' : 'warning'} style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
             <Users size={12} style={{ marginRight: '4px' }} />
             {seatsAvailable} place{seatsAvailable > 1 ? 's' : ''}
           </Badge>
