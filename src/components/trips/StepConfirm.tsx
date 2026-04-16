@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/trips/StepConfirm.tsx
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";

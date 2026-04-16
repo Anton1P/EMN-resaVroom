@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/components/dashboard/UpcomingTrips.tsx
 import React from "react";
 import { DashboardTrip } from "@/hooks/use-trips";

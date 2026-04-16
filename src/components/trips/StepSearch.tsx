@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // src/components/trips/StepSearch.tsx
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";

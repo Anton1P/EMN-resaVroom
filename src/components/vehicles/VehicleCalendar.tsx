@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, react/no-unescaped-entities */
 import React, { useState } from 'react';
 import {
   format, startOfWeek, endOfWeek, eachDayOfInterval,

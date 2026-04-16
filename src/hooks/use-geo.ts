@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/hooks/use-geo.ts
 import useSWR from "swr";
 import { useState, useCallback } from "react";

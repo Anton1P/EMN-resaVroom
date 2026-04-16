@@ -225,12 +225,20 @@
 
 ---
 
-## Phase 9 — Panel Admin ⏳
+## Phase 9 — Panel Admin ✅
 
-**Tâches à faire :**
-- [ ] Layout admin (protection rôle)
-- [ ] Pages : véhicules, trajets, utilisateurs, settings, audit
-- [ ] CRUD complet + suppression forcée
+**Tâches réalisées :**
+- [x] Layout admin (`src/app/admin/layout.tsx` + `page.tsx`) protégeant les routes
+- [x] Gestion des véhicules (`/admin/vehicles`) : ajout, modification, maintenance
+- [x] Gestion des trajets (`/admin/trips`) : liste globale avec pagination, filtres, suppression forcée
+- [x] Gestion des utilisateurs (`/admin/users`) : ajout d'admins, gestion des services (liste blanche)
+- [x] Gestion des paramètres (`/admin/settings`) : modification de `buffer_minutes`
+- [x] Journal d'audit (`/admin/audit`) : affichage avec filtres et pagination
+
+**Critères validés :**
+- [x] `npx tsc --noEmit` et `npm run build` passent sans erreurs
+- [x] Intégrations respectant le design system (cartes, boutons, modales)
+- [x] Notes laissées pour l'évolution vers Entra ID pour la gestion des rôles
 
 ---
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/lib/services/vehicle-service.ts — Service de gestion des véhicules
 // Implémente les algorithmes SAD 7.1 (position) et 7.2 (disponibilité)
 

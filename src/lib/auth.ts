@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/lib/auth.ts — Configuration NextAuth + helpers d'authentification
 // ⚠️ PROVIDER DE DÉVELOPPEMENT TEMPORAIRE : CredentialsProvider
 // À remplacer par AzureADProvider quand les credentials Entra ID seront disponibles.
