@@ -15,14 +15,15 @@ export default function AdminTripsPage() {
   const [statusFilter, setStatusFilter] = useState("all"); // all, SCHEDULED, CANCELLED
   const [dateFilter, setDateFilter] = useState("");
 
-  // Construit l&#39;URL avec les paramètres
-  const url = new URL("/api/admin/trips", window.location.origin);
-  url.searchParams.set("page", page.toString());
-  url.searchParams.set("limit", "15");
-  if (statusFilter !== "all") url.searchParams.set("status", statusFilter);
-  if (dateFilter) url.searchParams.set("date", dateFilter);
+  // Construit les paramètres de l'URL
+  const searchParams = new URLSearchParams();
+  searchParams.set("page", page.toString());
+  searchParams.set("limit", "15");
+  if (statusFilter !== "all") searchParams.set("status", statusFilter);
+  if (dateFilter) searchParams.set("date", dateFilter);
 
-  const { data, error, mutate } = useSWR(url.pathname + url.search, fetcher);
+  const url = `/api/admin/trips?${searchParams.toString()}`;
+  const { data, error, mutate } = useSWR(url, fetcher);
 
   // Etat pour la modale de confirmation
   const [tripToDelete, setTripToDelete] = useState<  any>(null);
@@ -61,7 +62,7 @@ export default function AdminTripsPage() {
          <div style={{ flex: 1, minWidth: "200px" }}>
             <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500", fontSize: "0.9rem" }}>Statut</label>
             <select className="select" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ width: "100%" }}>
-                <option value="all">Tous (sauf annulés par défaut si non spécifié, mais ici tous)</option>
+                <option value="all">Tous</option>
                 <option value="SCHEDULED">Planifiés/En cours</option>
                 <option value="CANCELLED">Annulés</option>
             </select>
