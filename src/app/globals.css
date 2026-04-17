@@ -315,6 +315,11 @@ a:hover {
   margin-right: -50vw;
   padding: 0 1rem;
 }
+@media (max-width: 1600px) {
+  .admin-container {
+   width: 100vw;
+  }
+}
 
 @media (min-width: 768px) {
   .admin-container {

@@ -1147,13 +1147,12 @@ function canDeleteTrip(
 }
 
 /**
- * Vérifie si le conducteur peut MODIFIER l'heure de départ.
+ * Vérifie si une modifcation du trajet est autorisée.
  * 
  * Règles :
- * - Seule l'heure de départ est modifiable.
- * - Si des passagers SELF existent → modification possible uniquement si 48h+ avant le départ.
- * - Si aucun passager SELF → modification libre.
- * - Un admin peut toujours modifier.
+ * - Le conducteur ne peut modifier *que* l'heure de départ.
+ * - S'il y a des passagers SELF → modification par le conducteur possible uniquement si 48h+ avant le départ.
+ * - Un administrateur peut modifier toutes les composantes du trajet (heure, date, véhicule, origine, destination).
  */
 function canModifyDepartureTime(
   trip: TripWithPassengers,
@@ -1388,11 +1387,17 @@ Détail d'un trajet avec tous ses passagers.
 > **`permissions`** est calculé côté serveur en fonction de l'utilisateur connecté. Le front n'a pas besoin de refaire la logique.
 
 #### `PATCH /api/trips/[id]`
-Modifie l'heure de départ d'un trajet (seule modification autorisée).
+Modifie les informations d'un trajet. 
+- *En tant que conducteur* : seule l'heure de départ est modifiable.
+- *En tant qu'administrateur* : tous les champs du trajet (véhicule, origine, destination, dates complètes) peuvent être modifiés simultanément. Une re-vérification des conflits (chevauchements) est systématiquement effectuée côté backend.
 
-**Body :**
+**Body (exemple modification complète) :**
 ```json
 {
+  "vehicleId": "clx...",
+  "type": "ROUND_TRIP",
+  "originCampusId": "clx...",
+  "destinationCampusId": "clx...",
   "departureTime": "2026-04-16T09:00:00Z",
   "estimatedArrivalTime": "2026-04-16T11:00:00Z",
   "returnDepartureTime": "2026-04-16T17:00:00Z",
@@ -1400,9 +1405,10 @@ Modifie l'heure de départ d'un trajet (seule modification autorisée).
 }
 ```
 
-> Les heures d'arrivée doivent être recalculées côté client (appel ORS) avant l'envoi.
+> La modification globale repasse par le flux transactionnel (`findVehicleConflict`, `findPersonConflict`) pour assurer la validité du nouveau créneau.
 
-**Réponse 403 :** Si la modification est interdite (< 48h avec passagers SELF).
+**Réponse 403 :** Si la modification est interdite au conducteur (< 48h avec passagers SELF). 
+**Réponse 409 :** En cas de conflit d'horaire ou de véhicule non disponible.
 
 #### `DELETE /api/trips/[id]`
 Supprime (annule) un trajet. Passe le statut à `CANCELLED`.
@@ -1822,7 +1828,10 @@ Toutes les pages admin sont dans le layout `/admin/layout.tsx` qui vérifie le r
 
 **`/admin/vehicles`** : Table des véhicules avec actions (modifier, passer en maintenance). Formulaire d'ajout.
 
-**`/admin/trips`** : Table de tous les trajets avec recherche/filtres. Bouton "Supprimer" (force delete) avec confirmation modale. Notification automatique par mail si des passagers sont impactés.
+**`/admin/trips`** : Table de tous les trajets avec recherche/filtres. 
+- Bouton "Modifier" pour modifier toutes les composantes d'un trajet (véhicule, origine, dates, etc.).
+- Bouton "Supprimer" (force delete) avec confirmation modale. 
+> Notification automatique par mail si des passagers sont impactés (modification ou suppression).
 
 **`/admin/users`** : 
 - Section "Services autorisés" : table + formulaire d'ajout.

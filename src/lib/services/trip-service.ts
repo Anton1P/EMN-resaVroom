@@ -337,25 +337,86 @@ export async function updateTripInfo(
     throw new PermissionError("Seul un administrateur peut modifier librement toutes les informations d'un trajet.");
   }
 
-  // Update basic info except IDs
-  const updated = await prisma.trip.update({
-    where: { id: tripId },
-    data: {
-      vehicleId: data.vehicleId !== undefined ? data.vehicleId : undefined,
-      type: data.type !== undefined ? data.type : undefined,
-      originCampusId: data.originCampusId !== undefined ? data.originCampusId : undefined,
-      destinationCampusId: data.destinationCampusId !== undefined ? data.destinationCampusId : undefined,
-      destinationOtherLabel: data.destinationOtherLabel !== undefined ? data.destinationOtherLabel : undefined,
-      destinationOtherLat: data.destinationOtherLat !== undefined ? data.destinationOtherLat : undefined,
-      destinationOtherLng: data.destinationOtherLng !== undefined ? data.destinationOtherLng : undefined,
-      returnCampusId: data.returnCampusId !== undefined ? data.returnCampusId : undefined,
-      departureTime: data.departureTime !== undefined ? data.departureTime : undefined,
-      estimatedArrivalTime: data.estimatedArrivalTime !== undefined ? data.estimatedArrivalTime : undefined,
-      returnDepartureTime: data.returnDepartureTime !== undefined ? data.returnDepartureTime : undefined,
-      estimatedReturnArrivalTime: data.estimatedReturnArrivalTime !== undefined ? data.estimatedReturnArrivalTime : undefined,
-      comment: data.comment !== undefined ? data.comment : undefined,
-    },
-  });
+  const bufferMinutes = await getBufferMinutes();
+  
+  // Simulation des nouvelles informations du trajet pour vérifier les conflits
+  const newDepartureTime = data.departureTime ? new Date(data.departureTime) : trip.departureTime;
+  const newRawEndTime = data.type === "ONE_WAY" || (data.type === undefined && trip.type === "ONE_WAY")
+      ? (data.estimatedArrivalTime ? new Date(data.estimatedArrivalTime) : trip.estimatedArrivalTime)
+      : (data.estimatedReturnArrivalTime ? new Date(data.estimatedReturnArrivalTime) : (trip.estimatedReturnArrivalTime || trip.estimatedArrivalTime));
+  const newEndTimeWithBuffer = addMinutes(newRawEndTime, bufferMinutes);
+  const newVehicleId = data.vehicleId || trip.vehicleId;
+
+  // On re-vérifie dans une transaction
+  const updated = await prisma.$transaction(async (tx) => {
+    // ── VÉRIF 1 : Véhicule pas en conflit (excluant ce trajet précis) ──
+    const vehicleConflict = await tx.trip.findFirst({
+        where: {
+          id: { not: tripId },
+          vehicleId: newVehicleId,
+          status: { not: "CANCELLED" },
+          departureTime: { lt: newEndTimeWithBuffer },
+          OR: [
+            { type: "ONE_WAY", estimatedArrivalTime: { gt: newDepartureTime } },
+            {
+              type: { in: ["ROUND_TRIP", "ROUND_TRIP_OTHER"] },
+              estimatedReturnArrivalTime: { gt: newDepartureTime },
+            },
+          ],
+        },
+        select: { id: true },
+    });
+    if (vehicleConflict) {
+      throw new VehicleConflictError(
+        "Ce véhicule est déjà réservé par un autre utilisateur sur ce nouveau créneau.",
+        vehicleConflict.id
+      );
+    }
+
+    // ── VÉRIF 2 : Conducteur pas en conflit ──
+    const driverConflict = await tx.trip.findFirst({
+        where: {
+          id: { not: tripId },
+          driverEntraId: trip.driverEntraId,
+          status: { not: "CANCELLED" },
+          departureTime: { lt: newEndTimeWithBuffer },
+          OR: [
+            { type: "ONE_WAY", estimatedArrivalTime: { gt: newDepartureTime } },
+            {
+              type: { in: ["ROUND_TRIP", "ROUND_TRIP_OTHER"] },
+              estimatedReturnArrivalTime: { gt: newDepartureTime },
+            },
+          ],
+        },
+        select: { id: true },
+    });
+    if (driverConflict) {
+        throw new DriverOverlapError(
+            "Le conducteur a déjà un trajet existant sur ce nouveau créneau.",
+            driverConflict.id
+        );
+    }
+
+    // ── MISE À JOUR ──
+    return await tx.trip.update({
+        where: { id: tripId },
+        data: {
+          vehicleId: data.vehicleId !== undefined ? data.vehicleId : undefined,
+          type: data.type !== undefined ? data.type : undefined,
+          originCampusId: data.originCampusId !== undefined ? data.originCampusId : undefined,
+          destinationCampusId: data.destinationCampusId !== undefined ? data.destinationCampusId : undefined,
+          destinationOtherLabel: data.destinationOtherLabel !== undefined ? data.destinationOtherLabel : undefined,
+          destinationOtherLat: data.destinationOtherLat !== undefined ? data.destinationOtherLat : undefined,
+          destinationOtherLng: data.destinationOtherLng !== undefined ? data.destinationOtherLng : undefined,
+          returnCampusId: data.returnCampusId !== undefined ? data.returnCampusId : undefined,
+          departureTime: data.departureTime ? new Date(data.departureTime) : undefined,
+          estimatedArrivalTime: data.estimatedArrivalTime ? new Date(data.estimatedArrivalTime) : undefined,
+          returnDepartureTime: data.returnDepartureTime !== undefined ? (data.returnDepartureTime === null ? null : new Date(data.returnDepartureTime)) : undefined,
+          estimatedReturnArrivalTime: data.estimatedReturnArrivalTime !== undefined ? (data.estimatedReturnArrivalTime === null ? null : new Date(data.estimatedReturnArrivalTime)) : undefined,
+          comment: data.comment !== undefined ? data.comment : undefined,
+        },
+    });
+  }, { isolationLevel: "Serializable" });
 
   await logAudit({
     userEntraId: actorEntraId,

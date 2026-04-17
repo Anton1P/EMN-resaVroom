@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthSession, handleBusinessError } from "@/lib/api-helpers";
 import { isAdmin } from "@/lib/auth";
-import { getTripById, cancelTrip, updateDepartureTime } from "@/lib/services/trip-service";
+import { getTripById, cancelTrip, updateDepartureTime, updateTripInfo } from "@/lib/services/trip-service";
 import { getTripDisplayStatus } from "@/lib/utils/dates";
 import { canDeleteTrip, canModifyDepartureTime, canJoinAsPassenger } from "@/lib/validators/permission-checker";
 
@@ -72,8 +72,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const userIsAdmin = await isAdmin(auth.session.user.entraId);
 
     // Si c'est un admin et qu'on modifie autre chose que l'heure de départ
-    if (userIsAdmin && Object.keys(body).some(k => k !== "departureTime")) {
-      const { updateTripInfo } = await import("@/lib/services/trip-service");
+    if (userIsAdmin && Object.keys(body).some(k => k !== "departureTime" && k !== "estimatedArrivalTime" && k !== "returnDepartureTime" && k !== "estimatedReturnArrivalTime")) {
       const updated = await updateTripInfo(
         id,
         body,

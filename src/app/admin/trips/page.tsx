@@ -4,13 +4,14 @@
 import React, { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle, Search, Filter, ArrowRight, ArrowLeftRight } from "lucide-react";
+import { Trash2, AlertTriangle, Search, Filter, ArrowRight, ArrowLeftRight, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Select } from "@/components/ui/Select";
 import { DatePickerInput } from "@/components/ui/CustomCalendarPicker";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { AdminEditTripModal } from "@/components/admin/AdminEditTripModal";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -32,6 +33,9 @@ export default function AdminTripsPage() {
   // Etat pour la modale de confirmation
   const [tripToDelete, setTripToDelete] = useState<  any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Etat pour la modale d'édition
+  const [tripToEdit, setTripToEdit] = useState<any>(null);
 
   const handleDelete = async () => {
     if (!tripToDelete) return;
@@ -158,9 +162,14 @@ export default function AdminTripsPage() {
                     </td>
                     <td style={{ padding: "1rem" }}>
                         {trip.status !== "CANCELLED" && (
-                            <Button variant="ghost" size="sm" style={{ color: "var(--color-danger)" }} onClick={() => setTripToDelete(trip)} title="Forcer l&#39;annulation">
-                                <Trash2 size={16} />
-                            </Button>
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <Button variant="ghost" size="sm" onClick={() => setTripToEdit(trip)} title="Modifier ce trajet">
+                                    <Edit size={16} />
+                                </Button>
+                                <Button variant="ghost" size="sm" style={{ color: "var(--color-danger)" }} onClick={() => setTripToDelete(trip)} title="Forcer l'annulation">
+                                    <Trash2 size={16} />
+                                </Button>
+                            </div>
                         )}
                     </td>
                   </tr>
@@ -211,12 +220,21 @@ export default function AdminTripsPage() {
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
                   <Button variant="ghost" onClick={() => setTripToDelete(null)} disabled={isDeleting}>Annuler</Button>
                   <Button onClick={handleDelete} disabled={isDeleting} style={{ backgroundColor: "var(--color-danger)", color: "white" }}>
-                      {isDeleting ? "Annulation..." : "Confirmer l&#39;annulation"}
+                      {isDeleting ? "Annulation..." : "Confirmer l'annulation"}
                   </Button>
               </div>
             </CardBody>
           </Card>
         </div>
+      )}
+
+      {tripToEdit && (
+        <AdminEditTripModal
+          isOpen={true}
+          onClose={() => setTripToEdit(null)}
+          trip={tripToEdit}
+          onSuccess={() => mutate()}
+        />
       )}
     </div>
   );
