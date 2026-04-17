@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession, isAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { Car, Map, Settings, Users, ShieldAlert } from "lucide-react";
+import { Card, CardBody } from "@/components/ui/Card";
 
 export default async function AdminLayout({
   children,
@@ -35,22 +36,24 @@ export default async function AdminLayout({
     <div className="app-container" style={{ display: "flex", gap: "2rem", marginTop: "2rem" }}>
       {/* Sidebar Admin */}
       <aside style={{ width: "250px", flexShrink: 0 }}>
-        <div className="card" style={{ position: "sticky", top: "2rem" }}>
-          <h2 className="text-xl font-bold mb-4">Administration</h2>
-          <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {adminLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="btn btn-ghost"
-                style={{ justifyContent: "flex-start", width: "100%" }}
-              >
-                <link.icon size={18} style={{ marginRight: "0.5rem" }} />
-                {link.name}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        <Card style={{ position: "sticky", top: "2rem" }}>
+          <CardBody>
+            <h2 className="text-xl font-bold mb-4">Administration</h2>
+            <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {adminLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="btn btn-ghost"
+                  style={{ justifyContent: "flex-start", width: "100%" }}
+                >
+                  <link.icon size={18} style={{ marginRight: "0.5rem" }} />
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+          </CardBody>
+        </Card>
       </aside>
 
       {/* Contenu principal */}
