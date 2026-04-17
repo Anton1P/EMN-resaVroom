@@ -249,6 +249,11 @@
 - [ ] `src/lib/services/mail-service.ts` — Envoi mails
 - [ ] 2 templates : confirmation trajet, annulation admin
 
+**Critères de validation :**
+- [ ] La création d'un trajet envoie un mail de confirmation au conducteur.
+- [ ] La suppression admin d'un trajet avec passagers envoie un mail au conducteur + tous les passagers.
+- [ ] Les mails sont envoyés depuis l'adresse partagée configurée.
+- [ ] Si l'envoi de mail échoue, le trajet est quand même créé/supprimé (pas de rollback).
 ---
 
 ## Phase 11 — Polish ⏳
@@ -260,3 +265,10 @@
 - [ ] Fallback ORS (saisie manuelle si API down)
 - [ ] SEO (titres, meta descriptions)
 - [ ] `npm run build` sans erreur
+
+**Critères de validation :**
+- [ ] L'application est utilisable sur mobile (navigation, formulaire de réservation).
+- [ ] Les pages affichent un état de chargement.
+- [ ] Les erreurs réseau sont gérées gracieusement.
+- [ ] Le fallback de saisie manuelle fonctionne si ORS est injoignable.
+- [ ] `npm run build` ne produit aucune erreur.

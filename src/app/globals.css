@@ -305,6 +305,47 @@ a:hover {
   padding: 0 1.5rem;
 }
 
+/* Admin Layout Breakout - Ignores parent max-width */
+.admin-container {
+  width: 90vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+  .admin-container {
+    padding: 0 2rem;
+  }
+}
+
+/* Admin Responsive Layout */
+.admin-layout {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  flex-direction: column;
+}
+
+.admin-sidebar {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .admin-layout {
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-direction: row;
+  }
+  .admin-sidebar {
+    width: 250px;
+  }
+}
+
 .page-header {
   margin-bottom: 2rem;
   padding-bottom: 1rem;

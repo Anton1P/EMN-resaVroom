@@ -5,17 +5,19 @@ export function CustomCalendarPicker({
   selectedDate, 
   onSelectDate, 
   onClose,
-  minDate
+  minDate,
+  allowPastDates = false
 }: { 
   selectedDate: string, 
   onSelectDate: (d: string) => void, 
   onClose?: () => void,
-  minDate?: string
+  minDate?: string,
+  allowPastDates?: boolean
 }) {
   const todayStr = new Date().toISOString().split('T')[0];
-  const effectiveMinDate = minDate || todayStr;
+  const effectiveMinDate = allowPastDates ? '1900-01-01' : (minDate || todayStr);
   
-  const defaultDateStr = selectedDate || effectiveMinDate;
+  const defaultDateStr = selectedDate || (allowPastDates ? todayStr : effectiveMinDate);
   const [viewedMonth, setViewedMonth] = useState(() => new Date(defaultDateStr));
 
   const navigateMonth = (step: number) => {
@@ -134,12 +136,14 @@ export function DatePickerInput({
   value, 
   onChange, 
   label,
-  minDate
+  minDate,
+  allowPastDates = false
 }: { 
   value: string, 
   onChange: (v: string) => void, 
   label: string,
-  minDate?: string
+  minDate?: string,
+  allowPastDates?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -180,6 +184,7 @@ export function DatePickerInput({
           onSelectDate={onChange} 
           onClose={() => setIsOpen(false)}
           minDate={minDate}
+          allowPastDates={allowPastDates}
         />
       )}
     </div>

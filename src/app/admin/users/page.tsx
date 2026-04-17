@@ -7,6 +7,9 @@ import { toast } from "sonner";
 import { ShieldCheck, UserPlus, Trash2, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -125,25 +128,30 @@ export default function AdminUsersPage() {
 
         {/* Section Administrateurs */}
         <section>
-          <div className="card">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                <ShieldCheck size={24} style={{ color: "var(--color-primary)" }} />
-                <h2 className="text-xl font-bold">Administrateurs</h2>
-            </div>
-            <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.9rem" }}>
-                Les administrateurs ont accès à l&#39;ensemble du panel d&#39;administration.
-                <br/><em>Note: En mode développement, l&#39;Entra ID doit être saisi manuellement.</em>
-            </p>
+          <Card>
+            <CardBody>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                  <ShieldCheck size={24} style={{ color: "var(--color-primary)" }} />
+                  <h2 className="text-xl font-bold">Administrateurs</h2>
+              </div>
+              <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+                  Les administrateurs ont accès à l&#39;ensemble du panel d&#39;administration.
+                  <br/><em>Note: En mode développement, l&#39;Entra ID doit être saisi manuellement.</em>
+              </p>
 
-            <form onSubmit={handleAddAdmin} style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem" }}>
-               <input type="email" className="input" placeholder="Email (ex: jean@entreprise.fr)" value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)} required style={{ flex: 1 }} />
-               <input type="text" className="input" placeholder="Entra ID" value={newAdminEntraId} onChange={e => setNewAdminEntraId(e.target.value)} required style={{ flex: 1 }} />
-               <button type="submit" className="btn btn-primary" disabled={isAddingAdmin}>
-                  <UserPlus size={18} /> Ajouter
-               </button>
-            </form>
+              <form onSubmit={handleAddAdmin} style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem", alignItems: "center" }}>
+                 <div style={{ flex: 1, marginBottom: "-1rem" }}>
+                   <Input type="email" placeholder="Email (ex: jean@entreprise.fr)" value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)} required />
+                 </div>
+                 <div style={{ flex: 1, marginBottom: "-1rem" }}>
+                   <Input type="text" placeholder="Entra ID" value={newAdminEntraId} onChange={e => setNewAdminEntraId(e.target.value)} required />
+                 </div>
+                 <Button type="submit" variant="primary" disabled={isAddingAdmin}>
+                    <UserPlus size={18} /> Ajouter
+                 </Button>
+              </form>
 
-            {adminsError ? (
+              {adminsError ? (
                 <div className="text-danger">Erreur de chargement des admins.</div>
             ) : !admins ? (
                 <div>Chargement...</div>
@@ -164,39 +172,43 @@ export default function AdminUsersPage() {
                             {format(new Date(admin.createdAt), "dd MMM yyyy", { locale: fr })}
                         </td>
                         <td style={{ padding: "0.75rem 0", textAlign: "right" }}>
-                           <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleRevokeAdmin(admin.id)} title="Révoquer">
+                           <Button variant="ghost" size="sm" style={{ color: "var(--color-danger)" }} onClick={() => handleRevokeAdmin(admin.id)} title="Révoquer">
                               <Trash2 size={16} />
-                           </button>
+                           </Button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
             )}
-          </div>
+            </CardBody>
+          </Card>
         </section>
 
         {/* Section Services autorisés */}
         <section>
-          <div className="card">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                <ShieldAlert size={24} style={{ color: "var(--color-primary)" }} />
-                <h2 className="text-xl font-bold">Services Autorisés (Liste blanche)</h2>
-            </div>
-            <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.9rem" }}>
-                Ces services peuvent être sélectionnés lors de la configuration de certains paramètres ou accès spécifiques de l&#39;entreprise.
-            </p>
+          <Card>
+            <CardBody>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                  <ShieldAlert size={24} style={{ color: "var(--color-primary)" }} />
+                  <h2 className="text-xl font-bold">Services Autorisés (Liste blanche)</h2>
+              </div>
+              <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+                  Ces services peuvent être sélectionnés lors de la configuration de certains paramètres ou accès spécifiques de l&#39;entreprise.
+              </p>
 
-            <form onSubmit={handleAddService} style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem" }}>
-               <input type="text" className="input" placeholder="Nom du service (ex: IT, RH, Compta)" value={newServiceName} onChange={e => setNewServiceName(e.target.value)} required style={{ flex: 1 }} />
-               <button type="submit" className="btn btn-primary" disabled={isAddingService}>
-                  <Plus size={18} /> Ajouter
-               </button>
-            </form>
+              <form onSubmit={handleAddService} style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem", alignItems: "center" }}>
+                 <div style={{ flex: 1, marginBottom: "-1rem" }}>
+                   <Input type="text" placeholder="Nom du service (ex: IT, RH, Compta)" value={newServiceName} onChange={e => setNewServiceName(e.target.value)} required />
+                 </div>
+                 <Button type="submit" variant="primary" disabled={isAddingService}>
+                    <Plus size={18} /> Ajouter
+                 </Button>
+              </form>
 
-            {servicesError ? (
-                <div className="text-danger">Erreur de chargement des services.</div>
-            ) : !services ? (
+              {servicesError ? (
+                  <div className="text-danger">Erreur de chargement des services.</div>
+              ) : !services ? (
                 <div>Chargement...</div>
             ) : (
                 <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
@@ -215,9 +227,9 @@ export default function AdminUsersPage() {
                             {format(new Date(service.createdAt), "dd MMM yyyy", { locale: fr })}
                         </td>
                         <td style={{ padding: "0.75rem 0", textAlign: "right" }}>
-                           <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleRemoveService(service.id)} title="Supprimer">
+                           <Button variant="ghost" size="sm" style={{ color: "var(--color-danger)" }} onClick={() => handleRemoveService(service.id)} title="Supprimer">
                               <Trash2 size={16} />
-                           </button>
+                           </Button>
                         </td>
                       </tr>
                     ))}
@@ -230,8 +242,9 @@ export default function AdminUsersPage() {
                     )}
                   </tbody>
                 </table>
-            )}
-          </div>
+              )}
+            </CardBody>
+          </Card>
         </section>
 
       </div>

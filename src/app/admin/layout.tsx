@@ -33,9 +33,9 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="app-container" style={{ display: "flex", gap: "2rem", marginTop: "2rem" }}>
+    <div className="admin-container admin-layout">
       {/* Sidebar Admin */}
-      <aside style={{ width: "250px", flexShrink: 0 }}>
+      <aside className="admin-sidebar">
         <Card style={{ position: "sticky", top: "2rem" }}>
           <CardBody>
             <h2 className="text-xl font-bold mb-4">Administration</h2>

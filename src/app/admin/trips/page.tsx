@@ -4,9 +4,13 @@
 import React, { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle, Search, Filter } from "lucide-react";
+import { Trash2, AlertTriangle, Search, Filter, ArrowRight, ArrowLeftRight } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Select } from "@/components/ui/Select";
+import { DatePickerInput } from "@/components/ui/CustomCalendarPicker";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -58,26 +62,37 @@ export default function AdminTripsPage() {
       <h1 className="text-2xl font-bold mb-6">Gestion des Trajets</h1>
 
       {/* Filtres */}
-      <div className="card" style={{ marginBottom: "1.5rem", display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
-         <div style={{ flex: 1, minWidth: "200px" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500", fontSize: "0.9rem" }}>Statut</label>
-            <select className="select" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ width: "100%" }}>
-                <option value="all">Tous</option>
-                <option value="SCHEDULED">Planifiés/En cours</option>
-                <option value="CANCELLED">Annulés</option>
-            </select>
+      <Card style={{ marginBottom: "1.5rem", overflow: "visible" }}>
+        <CardBody style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap", overflow: "visible" }}>
+          <div style={{ flex: 1, minWidth: "200px" }}>
+            <Select 
+              label="Statut" 
+              options={[
+                { value: "all", label: "Tous" },
+                { value: "SCHEDULED", label: "Planifiés/En cours" },
+                { value: "CANCELLED", label: "Annulés" }
+              ]}
+              value={statusFilter} 
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} 
+              style={{ width: "100%" }} 
+            />
          </div>
-         <div style={{ flex: 1, minWidth: "200px" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500", fontSize: "0.9rem" }}>Date exacte</label>
-            <input type="date" className="input" value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setPage(1); }} style={{ width: "100%" }} />
+         <div style={{ flex: 1, minWidth: "200px", zIndex: 10 }}>
+            <DatePickerInput
+              label="Date exacte"
+              value={dateFilter}
+              onChange={(v) => { setDateFilter(v); setPage(1); }}
+              allowPastDates={true}
+            />
          </div>
-         <button className="btn btn-ghost" onClick={() => { setStatusFilter("all"); setDateFilter(""); setPage(1); }} title="Réinitialiser les filtres">
+         <Button variant="ghost" onClick={() => { setStatusFilter("all"); setDateFilter(""); setPage(1); }} title="Réinitialiser les filtres" style={{ marginBottom: "1rem" }}>
             Réinitialiser
-         </button>
-      </div>
+         </Button>
+        </CardBody>
+      </Card>
 
       {/* Liste des trajets */}
-      <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+      <Card style={{ padding: 0, overflowX: "auto" }}>
         {error ? (
            <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-danger)" }}>Erreur lors du chargement des trajets.</div>
         ) : !data ? (
@@ -91,6 +106,7 @@ export default function AdminTripsPage() {
                   <th style={{ padding: "1rem" }}>Conducteur</th>
                   <th style={{ padding: "1rem" }}>Véhicule</th>
                   <th style={{ padding: "1rem" }}>Itinéraire</th>
+                  <th style={{ padding: "1rem" }}>Type</th>
                   <th style={{ padding: "1rem" }}>Passagers</th>
                   <th style={{ padding: "1rem" }}>Statut</th>
                   <th style={{ padding: "1rem" }}>Actions</th>
@@ -117,6 +133,17 @@ export default function AdminTripsPage() {
                             <strong>{trip.destinationCampus?.name || trip.destinationOtherLabel}</strong>
                         </div>
                     </td>
+                    <td style={{ padding: "1rem", whiteSpace: "nowrap" }}>
+                        {trip.type === 'ONE_WAY' ? (
+                          <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            Aller simple <ArrowRight size={12} />
+                          </span>
+                        ) : (
+                          <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--color-primary)', color: 'white' }}>
+                            Aller-retour <ArrowLeftRight size={12} />
+                          </span>
+                        )}
+                    </td>
                     <td style={{ padding: "1rem", textAlign: "center" }}>
                         <div className="badge badge-neutral">{trip.passengers.length}</div>
                     </td>
@@ -131,9 +158,9 @@ export default function AdminTripsPage() {
                     </td>
                     <td style={{ padding: "1rem" }}>
                         {trip.status !== "CANCELLED" && (
-                            <button className="btn btn-ghost btn-sm text-danger" style={{ color: "var(--color-danger)" }} onClick={() => setTripToDelete(trip)} title="Forcer l&#39;annulation">
+                            <Button variant="ghost" size="sm" style={{ color: "var(--color-danger)" }} onClick={() => setTripToDelete(trip)} title="Forcer l&#39;annulation">
                                 <Trash2 size={16} />
-                            </button>
+                            </Button>
                         )}
                     </td>
                   </tr>
@@ -155,38 +182,40 @@ export default function AdminTripsPage() {
                         Page {data.pagination.page} sur {data.pagination.totalPages} ({data.pagination.total} trajets)
                     </span>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button className="btn btn-outline btn-sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Précédent</button>
-                        <button className="btn btn-outline btn-sm" disabled={page === data.pagination.totalPages} onClick={() => setPage(p => p + 1)}>Suivant</button>
+                        <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Précédent</Button>
+                        <Button variant="secondary" size="sm" disabled={page === data.pagination.totalPages} onClick={() => setPage(p => p + 1)}>Suivant</Button>
                     </div>
                 </div>
             )}
           </>
         )}
-      </div>
+      </Card>
 
       {/* Modale de confirmation de suppression */}
       {tripToDelete && (
         <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="modal card" style={{ width: "100%", maxWidth: "450px", padding: "2rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", color: "var(--color-danger)" }}>
-                <AlertTriangle size={24} />
-                <h2 className="text-xl font-bold" style={{ color: "inherit" }}>Forcer l&#39;annulation</h2>
-            </div>
+          <Card style={{ width: "100%", maxWidth: "450px" }}>
+            <CardBody>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", color: "var(--color-danger)" }}>
+                  <AlertTriangle size={24} />
+                  <h2 className="text-xl font-bold" style={{ color: "inherit" }}>Forcer l&#39;annulation</h2>
+              </div>
 
-            <p style={{ marginBottom: "1rem", lineHeight: 1.5 }}>
-                Êtes-vous sûr de vouloir annuler ce trajet du <strong>{format(new Date(tripToDelete.departureTime), "dd/MM/yyyy à HH:mm")}</strong> ?
-            </p>
-            <p style={{ marginBottom: "1.5rem", fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
-                Cette action est irréversible. Un email sera automatiquement envoyé au conducteur et aux {tripToDelete.passengers.length} passager(s).
-            </p>
+              <p style={{ marginBottom: "1rem", lineHeight: 1.5 }}>
+                  Êtes-vous sûr de vouloir annuler ce trajet du <strong>{format(new Date(tripToDelete.departureTime), "dd/MM/yyyy à HH:mm")}</strong> ?
+              </p>
+              <p style={{ marginBottom: "1.5rem", fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
+                  Cette action est irréversible. Un email sera automatiquement envoyé au conducteur et aux {tripToDelete.passengers.length} passager(s).
+              </p>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
-                <button className="btn btn-ghost" onClick={() => setTripToDelete(null)} disabled={isDeleting}>Annuler</button>
-                <button className="btn btn-primary" style={{ backgroundColor: "var(--color-danger)" }} onClick={handleDelete} disabled={isDeleting}>
-                    {isDeleting ? "Annulation..." : "Confirmer l&#39;annulation"}
-                </button>
-            </div>
-          </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
+                  <Button variant="ghost" onClick={() => setTripToDelete(null)} disabled={isDeleting}>Annuler</Button>
+                  <Button onClick={handleDelete} disabled={isDeleting} style={{ backgroundColor: "var(--color-danger)", color: "white" }}>
+                      {isDeleting ? "Annulation..." : "Confirmer l&#39;annulation"}
+                  </Button>
+              </div>
+            </CardBody>
+          </Card>
         </div>
       )}
     </div>

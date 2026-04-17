@@ -5,6 +5,10 @@ import React, { useState, useEffect } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { Car, Plus, Settings, AlertTriangle, CheckCircle, Edit, Wrench } from "lucide-react";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -113,13 +117,13 @@ export default function AdminVehiclesPage() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h1 className="text-2xl font-bold">Gestion des Véhicules</h1>
-        <button className="btn btn-primary" onClick={openNewVehicleModal}>
+        <Button variant="primary" onClick={openNewVehicleModal}>
           <Plus size={18} />
           Ajouter un véhicule
-        </button>
+        </Button>
       </div>
 
-      <div className="card" style={{ padding: "0" }}>
+      <Card style={{ padding: "0" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid var(--color-border)", backgroundColor: "var(--color-bg-secondary)" }}>
@@ -145,16 +149,17 @@ export default function AdminVehiclesPage() {
                 </td>
                 <td style={{ padding: "1rem" }}>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(v)} title="Modifier">
+                      <Button variant="secondary" size="sm" onClick={() => openEditModal(v)} title="Modifier">
                           <Edit size={16} />
-                      </button>
-                      <button
-                        className={`btn btn-sm ${v.status === "AVAILABLE" ? "btn-outline" : "btn-primary"}`}
+                      </Button>
+                      <Button
+                        variant={v.status === "AVAILABLE" ? "secondary" : "primary"}
+                        size="sm"
                         onClick={() => handleToggleMaintenance(v)}
                         title={v.status === "AVAILABLE" ? "Passer en maintenance" : "Remettre disponible"}
                       >
                          {v.status === "AVAILABLE" ? <Wrench size={16} /> : <CheckCircle size={16} />}
-                      </button>
+                      </Button>
                     </div>
                 </td>
               </tr>
@@ -168,7 +173,7 @@ export default function AdminVehiclesPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </Card>
 
       {isModalOpen && (
         <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
@@ -178,31 +183,35 @@ export default function AdminVehiclesPage() {
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div>
                     <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Nom du véhicule</label>
-                    <input type="text" className="input" value={name} onChange={e => setName(e.target.value)} required placeholder="Ex: Renault Megane Grise" style={{ width: "100%" }} />
+                    <Input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Ex: Renault Megane Grise" style={{ width: "100%" }} />
                 </div>
                 <div>
                     <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Plaque d&#39;immatriculation</label>
-                    <input type="text" className="input" value={licensePlate} onChange={e => setLicensePlate(e.target.value)} required placeholder="AB-123-CD" style={{ width: "100%" }} />
+                    <Input type="text" value={licensePlate} onChange={e => setLicensePlate(e.target.value)} required placeholder="AB-123-CD" style={{ width: "100%" }} />
                 </div>
                 <div>
                     <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Nombre de places (conducteur inclus)</label>
-                    <input type="number" min="1" max="9" className="input" value={seats} onChange={e => setSeats(parseInt(e.target.value, 10))} required style={{ width: "100%" }} />
+                    <Input type="number" min={1} max={9} value={seats} onChange={e => setSeats(parseInt(e.target.value, 10))} required style={{ width: "100%" }} />
                 </div>
                 <div>
                     <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Campus d&#39;attache</label>
-                    <select className="select" value={defaultCampusId} onChange={e => setDefaultCampusId(e.target.value)} required style={{ width: "100%" }}>
-                       <option value="" disabled>Sélectionner un campus</option>
-                       {campuses.map(c => (
-                           <option key={c.id} value={c.id}>{c.name}</option>
-                       ))}
-                    </select>
+                    <Select 
+                       value={defaultCampusId} 
+                       onChange={e => setDefaultCampusId(e.target.value)} 
+                       required 
+                       style={{ width: "100%" }}
+                       options={[
+                           { value: "", label: "Sélectionner un campus" },
+                           ...campuses.map((c: any) => ({ value: c.id, label: c.name }))
+                       ]}
+                    />
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}>
-                   <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Annuler</button>
-                   <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                   <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>Annuler</Button>
+                   <Button variant="primary" type="submit" disabled={isSubmitting}>
                       {isSubmitting ? "Enregistrement..." : (editingVehicle ? "Modifier" : "Ajouter")}
-                   </button>
+                   </Button>
                 </div>
             </form>
           </div>

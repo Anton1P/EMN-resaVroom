@@ -5,6 +5,9 @@ import React, { useState } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Select } from "@/components/ui/Select";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -12,13 +15,13 @@ export default function AdminAuditPage() {
   const [page, setPage] = useState(1);
   const [entityType, setEntityType] = useState("all");
 
-  // Construit l&#39;URL avec les paramètres
-  const url = new URL("/api/admin/audit", window.location.origin);
-  url.searchParams.set("page", page.toString());
-  url.searchParams.set("limit", "15");
-  if (entityType !== "all") url.searchParams.set("entityType", entityType);
+  const searchParams = new URLSearchParams();
+  searchParams.set("page", page.toString());
+  searchParams.set("limit", "15");
+  if (entityType !== "all") searchParams.set("entity", entityType);
 
-  const { data, error } = useSWR(url.pathname + url.search, fetcher);
+  const url = `/api/admin/audit?${searchParams.toString()}`;
+  const { data, error } = useSWR(url, fetcher);
 
   const renderDetails = (details:   any) => {
     if (!details) return "-";
@@ -38,22 +41,29 @@ export default function AdminAuditPage() {
       <h1 className="text-2xl font-bold mb-6">Journal d&#39;Audit</h1>
 
       {/* Filtres */}
-      <div className="card" style={{ marginBottom: "1.5rem", display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
-         <div style={{ flex: 1, minWidth: "200px" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500", fontSize: "0.9rem" }}>Type d&#39;entité</label>
-            <select className="select" value={entityType} onChange={(e) => { setEntityType(e.target.value); setPage(1); }} style={{ width: "100%" }}>
-                <option value="all">Tous</option>
-                <option value="trip">Trajets</option>
-                <option value="vehicle">Véhicules</option>
-                <option value="admin">Administrateurs</option>
-                <option value="service">Services autorisés</option>
-                <option value="setting">Paramètres</option>
-            </select>
-         </div>
-      </div>
+      <Card style={{ marginBottom: "1.5rem", overflow: "visible" }}>
+        <CardBody style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap", overflow: "visible" }}>
+          <div style={{ flex: 1, minWidth: "200px" }}>
+            <Select
+              label="Type d&#39;entité"
+              options={[
+                { value: "all", label: "Tous" },
+                { value: "trip", label: "Trajets" },
+                { value: "vehicle", label: "Véhicules" },
+                { value: "admin", label: "Administrateurs" },
+                { value: "service", label: "Services autorisés" },
+                { value: "setting", label: "Paramètres" },
+              ]}
+              value={entityType}
+              onChange={(e) => { setEntityType(e.target.value); setPage(1); }}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Liste d&#39;audit */}
-      <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+      <Card style={{ padding: 0, overflowX: "auto" }}>
         {error ? (
            <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-danger)" }}>Erreur lors du chargement des logs.</div>
         ) : !data ? (
@@ -108,14 +118,14 @@ export default function AdminAuditPage() {
                         Page {data.page} sur {data.totalPages} ({data.total} logs)
                     </span>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button className="btn btn-outline btn-sm" disabled={data.page === 1} onClick={() => setPage(p => p - 1)}>Précédent</button>
-                        <button className="btn btn-outline btn-sm" disabled={data.page === data.totalPages} onClick={() => setPage(p => p + 1)}>Suivant</button>
+                        <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Précédent</Button>
+                        <Button variant="secondary" size="sm" disabled={page === data.totalPages} onClick={() => setPage(p => p + 1)}>Suivant</Button>
                     </div>
                 </div>
             )}
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

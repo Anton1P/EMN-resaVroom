@@ -4,8 +4,9 @@
 import React, { useState, useEffect } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Save, Clock } from "lucide-react";
-
+import { Save, Clock } from "lucide-react";import { Card, CardBody, CardTitle, CardHeader } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminSettingsPage() {
@@ -54,44 +55,44 @@ export default function AdminSettingsPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Paramètres Globaux</h1>
 
-      <div className="card" style={{ maxWidth: "600px" }}>
-        <h2 className="text-xl font-bold mb-4" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <Clock size={24} style={{ color: "var(--color-primary)" }} />
-            Configuration de la flotte
-        </h2>
+      <Card style={{ maxWidth: "600px" }}>
+        <CardHeader>
+          <CardTitle style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Clock size={24} style={{ color: "var(--color-primary)" }} />
+              Configuration de la flotte
+          </CardTitle>
+        </CardHeader>
+        <CardBody>
+          <form onSubmit={handleSave}>
+              <div style={{ marginBottom: "1.5rem" }}>
+                  <p className="text-muted" style={{ fontSize: "0.9rem", marginBottom: "1rem" }}>
+                      C&#39;est le temps minimum nécessaire avant qu&#39;un véhicule puisse être réservé à nouveau après un trajet.
+                      Permet d&#39;absorber les retards et de garantir la disponibilité.
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                      <Input
+                          type="number"
+                          label="Temps de buffer entre les réservations"
+                          min="0"
+                          max="120"
+                          value={bufferMinutes}
+                          onChange={(e) => setBufferMinutes(e.target.value)}
+                          required
+                          style={{ width: "150px" }}
+                      />
+                      <span style={{paddingTop: "25px"}}>minutes</span>
+                  </div>
+              </div>
 
-        <form onSubmit={handleSave}>
-            <div style={{ marginBottom: "1.5rem" }}>
-                <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>
-                    Temps de buffer entre les réservations (en minutes)
-                </label>
-                <p className="text-muted" style={{ fontSize: "0.9rem", marginBottom: "1rem" }}>
-                    C&#39;est le temps minimum nécessaire avant qu&#39;un véhicule puisse être réservé à nouveau après un trajet.
-                    Permet d&#39;absorber les retards et de garantir la disponibilité.
-                </p>
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    <input
-                        type="number"
-                        min="0"
-                        max="120"
-                        className="input"
-                        value={bufferMinutes}
-                        onChange={(e) => setBufferMinutes(e.target.value)}
-                        required
-                        style={{ width: "150px" }}
-                    />
-                    <span>minutes</span>
-                </div>
-            </div>
-
-            <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
-                <button type="submit" className="btn btn-primary" disabled={isSaving}>
-                    <Save size={18} />
-                    {isSaving ? "Sauvegarde..." : "Sauvegarder"}
-                </button>
-            </div>
-        </form>
-      </div>
+              <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
+                  <Button type="submit" variant="primary" disabled={isSaving}>
+                      <Save size={18} />
+                      {isSaving ? "Sauvegarde..." : "Sauvegarder"}
+                  </Button>
+              </div>
+          </form>
+        </CardBody>
+      </Card>
     </div>
   );
 }
