@@ -106,7 +106,7 @@ export function StepSearch({ onResults, initialParams }: StepSearchProps) {
         const dc = CAMPUSES.find(c => c.id === destCampusId);
         if (!dc) throw new Error("Campus destination invalide");
         destLabel = dc.name;
-        destGeoInfo = [dc.lon, dc.lat];
+        destGeoInfo = [dc.longitude, dc.latitude];
       } else {
         if (!destinationGeo) {
           toast.error("Veuillez sélectionner une destination valide.");
@@ -121,7 +121,7 @@ export function StepSearch({ onResults, initialParams }: StepSearchProps) {
       const depDateObj = new Date(`${departureDate}T${departureTime}`);
 
       const routeStats = await getDirections(
-        [originCampus.lon, originCampus.lat],
+        [originCampus.longitude, originCampus.latitude],
         destGeoInfo
       );
 
