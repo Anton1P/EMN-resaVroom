@@ -114,7 +114,7 @@ export function StepSearch({ onResults, initialParams }: StepSearchProps) {
           return;
         }
         destLabel = destinationGeo.label;
-        destGeoInfo = [destinationGeo.lon, destinationGeo.lat];
+        destGeoInfo = [destinationGeo.longitude, destinationGeo.latitude];
       }
 
       // 1. Compute ETA

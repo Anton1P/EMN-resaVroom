@@ -5,8 +5,10 @@ import { useState, useCallback } from "react";
 
 export interface GeoLocation {
   label: string;
-  lat: number;
-  lon: number;
+  latitude: number;
+  longitude: number;
+  city?: string;
+  postcode?: string;
 }
 
 export interface RouteStats {
