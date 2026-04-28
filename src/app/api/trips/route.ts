@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthSession, handleBusinessError } from "@/lib/api-helpers";
+import { isAdmin } from "@/lib/auth";
 import { createTrip } from "@/lib/services/trip-service";
 import { prisma } from "@/lib/prisma";
 import { getTripDisplayStatus } from "@/lib/utils/dates";
@@ -97,12 +98,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const userIsAdmin = await isAdmin(auth.session.user.entraId);
+
+    const driverEntraId = (userIsAdmin && body.driverEntraId) ? body.driverEntraId : auth.session.user.entraId;
+    const driverEmail = (userIsAdmin && body.driverEmail) ? body.driverEmail : auth.session.user.email;
+    const driverDisplayName = (userIsAdmin && body.driverDisplayName) ? body.driverDisplayName : auth.session.user.name;
 
     const trip = await createTrip({
       vehicleId: body.vehicleId,
-      driverEntraId: auth.session.user.entraId,
-      driverEmail: auth.session.user.email,
-      driverDisplayName: auth.session.user.name,
+      driverEntraId,
+      driverEmail,
+      driverDisplayName,
       type: body.type,
       originCampusId: body.originCampusId,
       destinationCampusId: body.destinationCampusId,

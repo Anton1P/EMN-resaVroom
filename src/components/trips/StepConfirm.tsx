@@ -9,6 +9,8 @@ import { Car, MapPin, Calendar, Clock, UserPlus, Info } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useSession } from "next-auth/react";
+import { UserSearchAutocomplete, UserSuggestion } from "@/components/ui/UserSearchAutocomplete";
 
 interface PassengerInput {
   name: string;
@@ -35,6 +37,11 @@ export function StepConfirm({ params, vehicle, onBack, onConfirm, isLoading }: S
   const [passengers, setPassengers] = useState<PassengerInput[]>([]);
   const [newPassengerName, setNewPassengerName] = useState("");
   const [newPassengerEmail, setNewPassengerEmail] = useState("");
+
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.isAdmin === true;
+  const [isForMe, setIsForMe] = useState(true);
+  const [selectedDriver, setSelectedDriver] = useState<UserSuggestion | null>(null);
 
   const handleAddPassenger = () => {
     if (!newPassengerName || !newPassengerEmail) return;
@@ -67,11 +74,19 @@ export function StepConfirm({ params, vehicle, onBack, onConfirm, isLoading }: S
       returnDepartureTime: params.returnDepartureTime?.toISOString(),
       estimatedReturnArrivalTime: params.estimatedReturnArrivalTime?.toISOString(),
       comment,
+      driverEntraId: (!isForMe && selectedDriver) ? selectedDriver.entraId : undefined,
+      driverEmail: (!isForMe && selectedDriver) ? selectedDriver.email : undefined,
+      driverDisplayName: (!isForMe && selectedDriver) ? selectedDriver.displayName : undefined,
       passengers: passengers.map(p => ({
         userEmail: p.email,
         userDisplayName: p.name,
       })),
     };
+
+    if (!isForMe && !selectedDriver) {
+      toast.error("Veuillez sélectionner un conducteur pour ce trajet.");
+      return;
+    }
 
     onConfirm(payload);
   };
@@ -86,7 +101,7 @@ export function StepConfirm({ params, vehicle, onBack, onConfirm, isLoading }: S
               Récapitulatif de la réservation
             </h3>
           </div>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>Véhicule</span>
@@ -94,14 +109,14 @@ export function StepConfirm({ params, vehicle, onBack, onConfirm, isLoading }: S
                 <Car size={16} /> {vehicle.name} ({vehicle.licensePlate})
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>Destination</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
                 <MapPin size={16} /> {params.destinationText}
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>Départ</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
@@ -127,18 +142,47 @@ export function StepConfirm({ params, vehicle, onBack, onConfirm, isLoading }: S
         </CardBody>
       </Card>
 
+      {isAdmin && (
+        <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+          <h4 className="font-semibold mb-3">Délégation de réservation (Admin)</h4>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={isForMe}
+              onChange={(e) => setIsForMe(e.target.checked)}
+              style={{ width: '16px', height: '16px' }}
+            />
+            <span>Ce trajet est pour vous</span>
+          </label>
+
+          {!isForMe && (
+            <div className="animate-fade-in mt-2">
+              <label className="form-label block mb-2 font-medium">Rechercher le conducteur assigné</label>
+              <UserSearchAutocomplete
+                placeholder="Ex: Jean Dupont"
+                onSelect={(user) => setSelectedDriver(user)}
+              />
+              <p className="text-sm" style={{ color: "var(--color-text-muted, #545454ff)", opacity: 0.7, fontStyle: "italic", marginTop: "-1rem" }}>
+                Un email lui sera envoyé pour lui notifier sa prise en charge.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="form-field">
         <label className="form-label">Motif du déplacement (facultatif)</label>
-        <Input 
+        <Input
           placeholder="Ex: Conférence EMN..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
       </div>
 
+
       <div className="p-4 bg-[var(--color-background)] rounded-lg border border-[var(--color-border)]">
         <h4 className="font-semibold mb-3">Passagers ({passengers.length} / {vehicle.seats - 1})</h4>
-        
+
         {passengers.map((p, i) => (
           <div key={i} className="flex justify-between items-center bg-[var(--color-surface)] p-2 mb-2 rounded border border-[var(--color-border)]">
             <div>
@@ -152,15 +196,15 @@ export function StepConfirm({ params, vehicle, onBack, onConfirm, isLoading }: S
         {passengers.length < vehicle.seats - 1 && (
           <div className="flex gap-2 items-end mt-4">
             <div className="flex-1">
-              <Input 
-                placeholder="Nom du passager" 
+              <Input
+                placeholder="Nom du passager"
                 value={newPassengerName}
                 onChange={(e) => setNewPassengerName(e.target.value)}
               />
             </div>
             <div className="flex-1">
-              <Input 
-                placeholder="Email professionnel" 
+              <Input
+                placeholder="Email professionnel"
                 type="email"
                 value={newPassengerEmail}
                 onChange={(e) => setNewPassengerEmail(e.target.value)}

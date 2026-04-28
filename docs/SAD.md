@@ -33,7 +33,7 @@ Application web interne permettant la gestion, la réservation et le covoiturage
 | Acteur | Description |
 |--------|-------------|
 | **Utilisateur** | Employé authentifié. Peut créer des trajets (conducteur) ou rejoindre des trajets (passager). |
-| **Administrateur** | Utilisateur promu. Gère la flotte, les utilisateurs, les paramètres. |
+| **Administrateur** | Utilisateur promu. Gère la flotte, les utilisateurs, les paramètres. Peut créer des réservations au nom d'un autre utilisateur (délégation) et en modifier le conducteur assigné. |
 | **Système** | Opérations automatiques : calcul de disponibilité, envoi de mails, validation des règles. |
 
 ### 1.3. Contraintes clés
@@ -971,6 +971,7 @@ async function createTrip(input: CreateTripInput): Promise<Trip> {
 }
 ```
 
+
 ### 7.5. Détection de conflits (fonctions utilitaires)
 
 ```typescript
@@ -1054,7 +1055,31 @@ async function findPersonConflict(
 }
 ```
 
-### 7.6. Classes d'erreurs métier
+### 7.6. Délégation de réservation par les Administrateurs
+
+> **Objectif :** Permettre à un Administrateur de créer ou de modifier un trajet en l'assignant à un autre collaborateur de l'entreprise.
+
+Lors de la création ou de la modification d'un trajet (`updateTripInfo`), l'API accepte les paramètres optionnels `driverEntraId`, `driverEmail`, et `driverDisplayName`. Si l'utilisateur qui effectue la requête est un administrateur, le système utilise ces informations pour substituer le conducteur.
+
+```typescript
+// Extrait de src/app/api/trips/route.ts
+const userIsAdmin = await isAdmin(auth.session.user.entraId);
+
+// Détermination du conducteur final
+const driverEntraId = (userIsAdmin && body.driverEntraId) 
+  ? body.driverEntraId 
+  : auth.session.user.entraId;
+
+const trip = await createTrip({
+  vehicleId: body.vehicleId,
+  driverEntraId,
+  // ...
+});
+```
+
+La validation des conflits (voir `findPersonConflict`) s'exécute de manière transparente sur ce nouveau conducteur assigné. Par conséquent, si un administrateur tente de réserver un véhicule au nom de Jean Dupont sur un créneau où Jean a déjà un déplacement de prévu, le système bloquera l'action en retournant une `DriverOverlapError`.
+
+### 7.7. Classes d'erreurs métier
 
 ```typescript
 // src/lib/utils/errors.ts

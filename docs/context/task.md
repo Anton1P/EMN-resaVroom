@@ -242,6 +242,23 @@
 
 ---
 
+## Phase 9.5 — Modification des conducteurs par les Admins ⏳
+
+**Tâches à faire :**
+- [x] Créer `src/components/ui/UserSearchAutocomplete.tsx` permettant de rechercher et sélectionner un utilisateur via `/api/users/search`.
+- [x] Mettre à jour `src/components/trips/StepConfirm.tsx` : option "Trajet pour vous" (pré-cochée) décochable si admin, affichant le `UserSearchAutocomplete`.
+- [x] Mettre à jour `src/components/admin/AdminEditTripModal.tsx` pour inclure la modification du conducteur avec `UserSearchAutocomplete`.
+- [x] Mettre à jour `src/lib/services/trip-service.ts` (`updateTripInfo` et gestion des conflits) pour accepter le changement de `driverEntraId`, `driverEmail`, `driverDisplayName` et valider les chevauchements temporels sur le *nouveau* conducteur.
+- [x] Mettre à jour `PATCH /api/trips/[id]/route.ts` et `POST /api/trips/route.ts` pour exploiter ces paramètres si et seulement si l'utilisateur est un Admin.
+
+**Critères de validation (à tester séquentiellement) :**
+- [x] **Test 1 :** L'Admin crée un trajet pour lui-même (la case "Trajet pour vous" est cochée, le comportement normal n'est pas perturbé).
+- [x] **Test 2 :** L'Admin crée un trajet pour "Marie Martin" (Marie Martin devient le conducteur validé du trajet).
+- [x] **Test 3 :** L'Admin crée un trajet pour "Jean Dupont", mais Jean a déjà un trajet sur le même créneau (le système refuse l'action avec l'erreur métier `DriverOverlapError`).
+- [x] **Test 4 :** Depuis le Panel Admin, l'Admin modifie un trajet existant et change son conducteur actuel vers "Jean Dupont". La modification réussit et le trajet s'affiche au nom de Jean.
+
+---
+
 ## Phase 10 — Notifications mail ⏳
 
 **Tâches à faire :**

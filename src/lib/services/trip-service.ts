@@ -346,6 +346,7 @@ export async function updateTripInfo(
       : (data.estimatedReturnArrivalTime ? new Date(data.estimatedReturnArrivalTime) : (trip.estimatedReturnArrivalTime || trip.estimatedArrivalTime));
   const newEndTimeWithBuffer = addMinutes(newRawEndTime, bufferMinutes);
   const newVehicleId = data.vehicleId || trip.vehicleId;
+  const newDriverEntraId = data.driverEntraId || trip.driverEntraId;
 
   // On re-vérifie dans une transaction
   const updated = await prisma.$transaction(async (tx) => {
@@ -377,7 +378,7 @@ export async function updateTripInfo(
     const driverConflict = await tx.trip.findFirst({
         where: {
           id: { not: tripId },
-          driverEntraId: trip.driverEntraId,
+          driverEntraId: newDriverEntraId,
           status: { not: "CANCELLED" },
           departureTime: { lt: newEndTimeWithBuffer },
           OR: [
@@ -401,6 +402,9 @@ export async function updateTripInfo(
     return await tx.trip.update({
         where: { id: tripId },
         data: {
+          driverEntraId: data.driverEntraId !== undefined ? data.driverEntraId : undefined,
+          driverEmail: data.driverEmail !== undefined ? data.driverEmail : undefined,
+          driverDisplayName: data.driverDisplayName !== undefined ? data.driverDisplayName : undefined,
           vehicleId: data.vehicleId !== undefined ? data.vehicleId : undefined,
           type: data.type !== undefined ? data.type : undefined,
           originCampusId: data.originCampusId !== undefined ? data.originCampusId : undefined,

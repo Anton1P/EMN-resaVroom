@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { UserSearchAutocomplete, UserSuggestion } from "@/components/ui/UserSearchAutocomplete";
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -34,6 +35,8 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
   const [returnDepartureTime, setReturnDepartureTime] = useState("");
   const [estimatedReturnArrivalTime, setEstimatedReturnArrivalTime] = useState("");
 
+  const [driver, setDriver] = useState<UserSuggestion | null>(null);
+
   useEffect(() => {
     if (trip && isOpen) {
       setVehicleId(trip.vehicleId || "");
@@ -54,6 +57,16 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
       setEstimatedArrivalTime(toLocalDatetime(trip.estimatedArrivalTime));
       setReturnDepartureTime(toLocalDatetime(trip.returnDepartureTime));
       setEstimatedReturnArrivalTime(toLocalDatetime(trip.estimatedReturnArrivalTime));
+
+      if (trip.driverEntraId) {
+        setDriver({
+          entraId: trip.driverEntraId,
+          displayName: trip.driverDisplayName || "",
+          email: trip.driverEmail || ""
+        });
+      } else {
+        setDriver(null);
+      }
     }
   }, [trip, isOpen]);
 
@@ -68,6 +81,12 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
       departureTime: new Date(departureTime).toISOString(),
       estimatedArrivalTime: new Date(estimatedArrivalTime).toISOString(),
     };
+
+    if (driver) {
+      payload.driverEntraId = driver.entraId;
+      payload.driverEmail = driver.email;
+      payload.driverDisplayName = driver.displayName;
+    }
 
     if (destinationCampusId) {
       payload.destinationCampusId = destinationCampusId;
@@ -116,6 +135,15 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
     <Modal isOpen={isOpen} onClose={onClose} title="Modifier le trajet (Admin)">
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         
+        <div>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Conducteur</label>
+          <UserSearchAutocomplete 
+            placeholder="Rechercher un conducteur..."
+            defaultValue={trip?.driverDisplayName ? `${trip.driverDisplayName} (${trip.driverEmail})` : ""}
+            onSelect={(user) => setDriver(user)}
+          />
+        </div>
+
         <div>
           <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Véhicule</label>
           <Select

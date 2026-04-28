@@ -30,6 +30,8 @@
 .logo-text {
   background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   -webkit-background-clip: text;
+  background-clip: text;
+  /* Ajout de la propriété standard */
   -webkit-text-fill-color: transparent;
 }
 
@@ -121,7 +123,8 @@
   text-decoration: none;
 }
 
-.mobile-nav-link:hover, .mobile-nav-link.active {
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
   background: var(--color-background);
   color: var(--color-primary);
   text-decoration: none;
@@ -131,9 +134,11 @@
   .desktop-only {
     display: none !important;
   }
+
   .mobile-menu-btn {
     display: block;
   }
+
   .mobile-menu {
     display: block;
     animation: fadeIn var(--transition-fast);
