@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { UserSearchAutocomplete, UserSuggestion } from "@/components/ui/UserSearchAutocomplete";
+import { DatePickerInput } from "@/components/ui/CustomCalendarPicker";
+import { getDirections } from "@/hooks/use-geo";
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -29,10 +31,16 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
   const [originCampusId, setOriginCampusId] = useState("");
   const [destinationCampusId, setDestinationCampusId] = useState("");
   const [destinationOtherLabel, setDestinationOtherLabel] = useState("");
+  const [destinationOtherLat, setDestinationOtherLat] = useState<number | null>(null);
+  const [destinationOtherLng, setDestinationOtherLng] = useState<number | null>(null);
+  const [status, setStatus] = useState("SCHEDULED");
   
+  const [departureDate, setDepartureDate] = useState("");
   const [departureTime, setDepartureTime] = useState("");
   const [estimatedArrivalTime, setEstimatedArrivalTime] = useState("");
-  const [returnDepartureTime, setReturnDepartureTime] = useState("");
+
+  const [returnDate, setReturnDate] = useState("");
+  const [returnTime, setReturnTime] = useState("");
   const [estimatedReturnArrivalTime, setEstimatedReturnArrivalTime] = useState("");
 
   const [driver, setDriver] = useState<UserSuggestion | null>(null);
@@ -45,18 +53,38 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
       setDestinationCampusId(trip.destinationCampusId || "");
       setDestinationOtherLabel(trip.destinationOtherLabel || "");
 
+      const toLocalDate = (dateStr: string) => {
+        if (!dateStr) return "";
+        const d = new Date(dateStr);
+        const tzOffset = d.getTimezoneOffset() * 60000;
+        return (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 10);
+      };
+
+      const toLocalTime = (dateStr: string) => {
+        if (!dateStr) return "";
+        const d = new Date(dateStr);
+        const tzOffset = d.getTimezoneOffset() * 60000;
+        return (new Date(d.getTime() - tzOffset)).toISOString().slice(11, 16);
+      };
+
       const toLocalDatetime = (dateStr: string) => {
         if (!dateStr) return "";
         const d = new Date(dateStr);
         const tzOffset = d.getTimezoneOffset() * 60000;
-        const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
-        return localISOTime;
+        return (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
       };
 
-      setDepartureTime(toLocalDatetime(trip.departureTime));
+      setDepartureDate(toLocalDate(trip.departureTime));
+      setDepartureTime(toLocalTime(trip.departureTime));
       setEstimatedArrivalTime(toLocalDatetime(trip.estimatedArrivalTime));
-      setReturnDepartureTime(toLocalDatetime(trip.returnDepartureTime));
+
+      setReturnDate(toLocalDate(trip.returnDepartureTime));
+      setReturnTime(toLocalTime(trip.returnDepartureTime));
       setEstimatedReturnArrivalTime(toLocalDatetime(trip.estimatedReturnArrivalTime));
+
+      setDestinationOtherLat(trip.destinationOtherLat || null);
+      setDestinationOtherLng(trip.destinationOtherLng || null);
+      setStatus(trip.status || "SCHEDULED");
 
       if (trip.driverEntraId) {
         setDriver({
@@ -70,16 +98,62 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
     }
   }, [trip, isOpen]);
 
+  useEffect(() => {
+    if (!originCampusId || !departureDate || !departureTime || campuses?.length === 0) return;
+
+    const computeETA = async () => {
+      const originCampus = campuses?.find(c => c.id === originCampusId);
+      if (!originCampus) return;
+
+      let destGeoInfo: [number, number] | null = null;
+      if (destinationCampusId) {
+        const destCampus = campuses?.find(c => c.id === destinationCampusId);
+        if (destCampus) destGeoInfo = [destCampus.longitude, destCampus.latitude];
+      } else if (destinationOtherLng && destinationOtherLat) {
+        destGeoInfo = [destinationOtherLng, destinationOtherLat];
+      } else if (trip && trip.destinationOtherLng && trip.destinationOtherLat) {
+        destGeoInfo = [trip.destinationOtherLng, trip.destinationOtherLat];
+      }
+
+      if (!destGeoInfo) return;
+
+      const depDateObj = new Date(`${departureDate}T${departureTime}`);
+
+      const routeStats = await getDirections(
+        [originCampus.longitude, originCampus.latitude],
+        destGeoInfo
+      );
+
+      const durationMs = (routeStats?.durationMin || 60) * 60000;
+      const arrTime = new Date(depDateObj.getTime() + durationMs);
+
+      const tzOffset = arrTime.getTimezoneOffset() * 60000;
+      setEstimatedArrivalTime((new Date(arrTime.getTime() - tzOffset)).toISOString().slice(0, 16));
+
+      if (type !== "ONE_WAY" && returnDate && returnTime) {
+        const retDateObj = new Date(`${returnDate}T${returnTime}`);
+        const retArrTime = new Date(retDateObj.getTime() + durationMs);
+        const tzOffsetRet = retArrTime.getTimezoneOffset() * 60000;
+        setEstimatedReturnArrivalTime((new Date(retArrTime.getTime() - tzOffsetRet)).toISOString().slice(0, 16));
+      }
+    };
+
+    computeETA();
+  }, [originCampusId, destinationCampusId, destinationOtherLat, destinationOtherLng, departureDate, departureTime, returnDate, returnTime, type, campuses, trip]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const depDateObj = new Date(`${departureDate}T${departureTime}`);
 
     const payload: any = {
       vehicleId,
       type,
       originCampusId,
-      departureTime: new Date(departureTime).toISOString(),
+      departureTime: depDateObj.toISOString(),
       estimatedArrivalTime: new Date(estimatedArrivalTime).toISOString(),
+      status,
     };
 
     if (driver) {
@@ -97,12 +171,13 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
     }
 
     if (type !== "ONE_WAY") {
-      if (!returnDepartureTime || !estimatedReturnArrivalTime) {
+      if (!returnDate || !returnTime || !estimatedReturnArrivalTime) {
         toast.error("Veuillez spécifier les dates de retour.");
         setIsLoading(false);
         return;
       }
-      payload.returnDepartureTime = new Date(returnDepartureTime).toISOString();
+      const retDateObj = new Date(`${returnDate}T${returnTime}`);
+      payload.returnDepartureTime = retDateObj.toISOString();
       payload.estimatedReturnArrivalTime = new Date(estimatedReturnArrivalTime).toISOString();
     } else {
       payload.returnDepartureTime = null;
@@ -152,6 +227,20 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
             options={[
               { value: "", label: "Sélectionner un véhicule" },
               ...(vehicles || []).map((v: any) => ({ value: v.id, label: `${v.name} (${v.licensePlate})` }))
+            ]}
+            required
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Statut</label>
+          <Select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            options={[
+              { value: "SCHEDULED", label: "Planifié" },
+              { value: "CANCELLED", label: "Annulé" }
             ]}
             required
             style={{ width: "100%" }}
@@ -218,11 +307,19 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
           </div>
         )}
 
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}>
           <div style={{ flex: 1 }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Départ</label>
+            <DatePickerInput
+              label="Date de départ"
+              value={departureDate}
+              onChange={setDepartureDate}
+              minDate={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
             <Input
-              type="datetime-local"
+              label="Heure de départ"
+              type="time"
               value={departureTime}
               onChange={(e) => setDepartureTime(e.target.value)}
               required
@@ -230,37 +327,43 @@ export function AdminEditTripModal({ isOpen, onClose, trip, onSuccess }: AdminEd
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Arrivée estimée</label>
             <Input
+              label="Arrivée estimée"
               type="datetime-local"
               value={estimatedArrivalTime}
-              onChange={(e) => setEstimatedArrivalTime(e.target.value)}
-              required
-              style={{ width: "100%" }}
+              readOnly
+              style={{ width: "100%", backgroundColor: "var(--color-bg-secondary)" }}
             />
           </div>
         </div>
 
         {type !== "ONE_WAY" && (
-          <div style={{ display: "flex", gap: "1rem", backgroundColor: "var(--color-bg-secondary)", borderRadius: "10px" }}>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "flex-end", backgroundColor: "var(--color-bg-secondary)", borderRadius: "10px", padding: "1rem" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Retour</label>
+              <DatePickerInput
+                label="Date de retour"
+                value={returnDate}
+                onChange={setReturnDate}
+                minDate={departureDate || new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
               <Input
-                type="datetime-local"
-                value={returnDepartureTime}
-                onChange={(e) => setReturnDepartureTime(e.target.value)}
+                label="Heure de retour"
+                type="time"
+                value={returnTime}
+                onChange={(e) => setReturnTime(e.target.value)}
                 required
                 style={{ width: "100%" }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>Arrivée retour estimée</label>
               <Input
+                label="Arrivée retour estimée"
                 type="datetime-local"
                 value={estimatedReturnArrivalTime}
-                onChange={(e) => setEstimatedReturnArrivalTime(e.target.value)}
-                required
-                style={{ width: "100%" }}
+                readOnly
+                style={{ width: "100%", backgroundColor: "var(--color-bg-secondary)" }}
               />
             </div>
           </div>

@@ -72,7 +72,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const userIsAdmin = await isAdmin(auth.session.user.entraId);
 
     // Si c'est un admin et qu'on modifie autre chose que l'heure de départ
-    if (userIsAdmin && Object.keys(body).some(k => k !== "departureTime" && k !== "estimatedArrivalTime" && k !== "returnDepartureTime" && k !== "estimatedReturnArrivalTime")) {
+    if (userIsAdmin && Object.keys(body).some(k => k !== "departureTime" && k !== "estimatedArrivalTime" && k !== "returnDepartureTime" && k !== "estimatedReturnArrivalTime" && k !== "status")) {
       const updated = await updateTripInfo(
         id,
         body,

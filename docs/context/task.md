@@ -259,21 +259,21 @@
 
 ---
 
-## Phase 9.6 — Améliorations Panel Admin 
+## Phase 9.6 — Améliorations Panel Admin ✅
 
 **Tâches à faire :**
-- [ ] Mettre à jour `src/components/admin/AdminEditTripModal.tsx` pour intégrer le calcul automatique des temps de trajet via l'API (ex: `use-geo.ts` ou `/api/geo/directions`). Les champs d'arrivée estimée (`estimatedArrivalTime`, `estimatedReturnArrivalTime`) doivent être calculés dynamiquement et affichés en lecture seule.
-- [ ] Remplacer les champs `<Input type="datetime-local" />` par le composant calendrier du projet (ex: `DatePickerInput`) dans `AdminEditTripModal.tsx` et empêcher la sélection de dates antérieures à maintenant.
-- [ ] Ajouter un champ permettant de modifier le statut du trajet (`status` : `SCHEDULED`, `CANCELLED`) dans `AdminEditTripModal.tsx`.
-- [ ] Mettre à jour `updateTripInfo` dans `src/lib/services/trip-service.ts` pour accepter et traiter le changement de `status`.
-- [ ] Revoir et corriger les règles de validation (conflits) dans `updateTripInfo` : s'assurer qu'un admin ne puisse pas créer un chevauchement temporel pour un véhicule ou pour un conducteur (y compris avec la gestion correcte du buffer de sécurité).
+- [x] Mettre à jour `src/components/admin/AdminEditTripModal.tsx` pour intégrer le calcul automatique des temps de trajet via l'API (ex: `use-geo.ts` ou `/api/geo/directions`). Les champs d'arrivée estimée (`estimatedArrivalTime`, `estimatedReturnArrivalTime`) doivent être calculés dynamiquement et affichés en lecture seule.
+- [x] Remplacer les champs `<Input type="datetime-local" />` par le composant calendrier du projet (ex: `DatePickerInput`) dans `AdminEditTripModal.tsx` et empêcher la sélection de dates antérieures à maintenant.
+- [x] Ajouter un champ permettant de modifier le statut du trajet (`status` : `SCHEDULED`, `CANCELLED`) dans `AdminEditTripModal.tsx`.
+- [x] Mettre à jour `updateTripInfo` dans `src/lib/services/trip-service.ts` pour accepter et traiter le changement de `status`.
+- [x] Revoir et corriger les règles de validation (conflits) dans `updateTripInfo` : s'assurer qu'un admin ne puisse pas créer un chevauchement temporel pour un véhicule ou pour un conducteur (y compris avec la gestion correcte du buffer de sécurité).
 
 **Critères de validation (Tests obligatoires) :**
-- [ ] **Test 1 (ETA automatique) :** Modifier l'heure de départ ou la destination d'un trajet et vérifier que l'heure d'arrivée est recalculée automatiquement (lecture seule).
-- [ ] **Test 2 (Calendrier) :** Ouvrir le sélecteur de date/heure et vérifier qu'aucune date passée ne peut être sélectionnée.
-- [ ] **Test 3 (Statut) :** Changer le statut d'un trajet de `SCHEDULED` à `CANCELLED` via la modale et valider que l'interface et la base de données reflètent ce changement.
-- [ ] **Test 4 (Conflit Véhicule) :** Tenter d'assigner un véhicule qui possède déjà un trajet sur le nouveau créneau choisi. L'action doit être rejetée avec une erreur claire de conflit de véhicule.
-- [ ] **Test 5 (Conflit Conducteur) :** Tenter de déplacer un trajet sur un créneau où le conducteur est déjà assigné à un autre trajet. L'action doit être rejetée avec une erreur claire de chevauchement.
+- [x] **Test 1 (ETA automatique) :** Modifier l'heure de départ ou la destination d'un trajet et vérifier que l'heure d'arrivée est recalculée automatiquement (lecture seule).
+- [x] **Test 2 (Calendrier) :** Ouvrir le sélecteur de date/heure et vérifier qu'aucune date passée ne peut être sélectionnée.
+- [x] **Test 3 (Statut) :** Changer le statut d'un trajet de `SCHEDULED` à `CANCELLED` via la modale et valider que l'interface et la base de données reflètent ce changement.
+- [x] **Test 4 (Conflit Véhicule) :** Tenter d'assigner un véhicule qui possède déjà un trajet sur le nouveau créneau choisi. L'action doit être rejetée avec une erreur claire de conflit de véhicule.
+- [x] **Test 5 (Conflit Conducteur) :** Tenter de déplacer un trajet sur un créneau où le conducteur est déjà assigné à un autre trajet. L'action doit être rejetée avec une erreur claire de chevauchement.
 
 ---
 

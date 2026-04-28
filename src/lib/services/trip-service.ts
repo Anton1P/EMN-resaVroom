@@ -19,6 +19,7 @@ import type { Trip, TripType } from "@/generated/prisma/client";
 // ══════════════════════════════════════════════
 
 export interface CreateTripInput {
+  status?: "SCHEDULED" | "CANCELLED";
   vehicleId: string;
   driverEntraId: string;
   driverEmail: string;
@@ -375,22 +376,14 @@ export async function updateTripInfo(
     }
 
     // ── VÉRIF 2 : Conducteur pas en conflit ──
-    const driverConflict = await tx.trip.findFirst({
-        where: {
-          id: { not: tripId },
-          driverEntraId: newDriverEntraId,
-          status: { not: "CANCELLED" },
-          departureTime: { lt: newEndTimeWithBuffer },
-          OR: [
-            { type: "ONE_WAY", estimatedArrivalTime: { gt: newDepartureTime } },
-            {
-              type: { in: ["ROUND_TRIP", "ROUND_TRIP_OTHER"] },
-              estimatedReturnArrivalTime: { gt: newDepartureTime },
-            },
-          ],
-        },
-        select: { id: true },
-    });
+    const driverConflict = await findPersonConflict(
+      tx,
+      newDriverEntraId,
+      newDepartureTime,
+      newEndTimeWithBuffer,
+      tripId
+    );
+
     if (driverConflict) {
         throw new DriverOverlapError(
             "Le conducteur a déjà un trajet existant sur ce nouveau créneau.",
@@ -402,6 +395,7 @@ export async function updateTripInfo(
     return await tx.trip.update({
         where: { id: tripId },
         data: {
+          status: data.status !== undefined ? data.status : undefined,
           driverEntraId: data.driverEntraId !== undefined ? data.driverEntraId : undefined,
           driverEmail: data.driverEmail !== undefined ? data.driverEmail : undefined,
           driverDisplayName: data.driverDisplayName !== undefined ? data.driverDisplayName : undefined,
