@@ -32,7 +32,7 @@ export function TripWizard({ initialVehicleId, initialOriginCampusId }: TripWiza
   const [step, setStep] = useState<Step>(1);
   const [searchParams, setSearchParams] = useState<TripSearchParams | null>(null);
   const [availableVehicles, setAvailableVehicles] = useState<AvailableVehicle[]>([]);
-  const [suggestedTrips, setSuggestedTrips] = useState<DashboardTrip[]>([]);
+  const [suggestedTrips, setSuggestedTrips] = useState<any[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<AvailableVehicle | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -124,7 +124,7 @@ export function TripWizard({ initialVehicleId, initialOriginCampusId }: TripWiza
                     {suggestedTrips.map(t => (
                       <div key={t.id} className="bg-white p-3 rounded flex justify-between items-center text-[var(--color-text)]">
                         <div>
-                          <strong>{t.originCampus.name} → {t.destinationCampus?.name || t.destinationOtherLabel}</strong>
+                          <strong>{t.origin} → {t.destination}</strong>
                           <div className="text-sm text-[var(--color-text-secondary)]">Conduit par {t.driverDisplayName} • {t.seatsAvailable} place(s) restante(s)</div>
                         </div>
                         <Button 

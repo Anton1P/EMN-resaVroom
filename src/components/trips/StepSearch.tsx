@@ -39,7 +39,7 @@ interface StepSearchProps {
   onResults: (
     params: TripSearchParams,
     vehicles: AvailableVehicle[],
-    suggestedTrips: DashboardTrip[]
+    suggestedTrips: any[]
   ) => void;
   initialParams?: Partial<TripSearchParams>;
 }
