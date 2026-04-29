@@ -152,7 +152,8 @@ resavroom/
 │   │   │   ├── users/
 │   │   │   │   └── page.tsx          # Liste blanche services + gestion admins
 │   │   │   ├── settings/
-│   │   │   │   └── page.tsx          # Configuration (buffer, etc.)
+│   │   │   │   ├── page.tsx          # Paramètres globaux (Buffer, Options DB)
+│   │   │   │   └── actions.ts        # Server Actions (Neon Metrics, nettoyage de BDD)
 │   │   │   └── audit/
 │   │   │       └── page.tsx          # Journal d'audit
 │   │   │
@@ -1235,6 +1236,52 @@ function getTripDisplayStatus(trip: {
 }
 ```
 
+### 7.9. Panel Administrateur avancé (Métriques Neon et Data Purge)
+
+> **Objectif :** Exposer l'état de la base de données et supprimer périodiquement les anciennes données pour rester dans les quotas du Free Tier de Neon DB (ex: 100 CU-hrs, 0.5 GB de stockage, 5 GB de réseau) sans exposer de secrets.
+
+Pour des raisons de **sécurité critique**, les appels aux API tierces de Neon Database utilisent des **Server Actions** (`"use server"`). Les identifiants (API Key, Project ID) ne quittent jamais le serveur.
+
+```typescript
+// src/app/admin/settings/actions.ts
+
+"use server";
+
+import { prisma } from "@/lib/prisma";
+
+export async function getNeonMetrics() {
+  // Appels REST à console.neon.tech via NEON_API_KEY et NEON_PROJECT_ID
+  // Renvoie un objet formaté avec des pourcentages par rapport aux limites
+  // Ex: { compute: { value: 3.6, limit: 100, percent: 3.6 }, storage: {...} }
+}
+
+export async function cleanupDatabase(target: "TRIPS" | "AUDIT_LOGS", tripStatus: string) {
+  // Vérification stricte du statut Administrateur
+  const auth = await requireAdminSession();
+  if ("error" in auth) throw new Error("Non autorisé");
+
+  // Calcule la date limite (il y a 30 jours)
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  if (target === "TRIPS") {
+    // Grâce au "onDelete: Cascade" dans schema.prisma sur la table Passenger,
+    // Prisma deleteMany() sur Trip supprime automatiquement les réservations associées.
+    return prisma.trip.deleteMany({
+      where: {
+        createdAt: { lt: oneMonthAgo },
+        // Application conditionnelle du statut (Annulé, Planifié/Terminé ou Tous)
+      }
+    });
+  } else {
+    return prisma.auditLog.deleteMany({
+      where: { createdAt: { lt: oneMonthAgo } }
+    });
+  }
+}
+```
+L'interface de ces Server Actions est consommée directement par un composant Client (React), sans avoir besoin de créer de multiples *API Routes*. La suppression gère la cascade pour ne pas laisser de passagers orphelins.
+
 ---
 
 ## 8. Spécification des API Routes
@@ -2172,7 +2219,9 @@ Toutes les pages admin sont dans le layout `/admin/layout.tsx` qui vérifie le r
 4. `src/app/admin/trips/page.tsx`
 5. `src/app/admin/users/page.tsx`
 6. `src/app/admin/settings/page.tsx`
-7. `src/app/admin/audit/page.tsx`
+7. `src/components/admin/DatabaseControls.tsx` (Dashboard de la BDD et purge Data)
+8. `src/app/admin/settings/actions.ts` (Appels sécurisés Neon API & Prisma deleteMany)
+9. `src/app/admin/audit/page.tsx`
 
 **Critères de validation :**
 - [ ] Accès refusé pour les non-admins (redirection ou 403).
@@ -2182,6 +2231,8 @@ Toutes les pages admin sont dans le layout `/admin/layout.tsx` qui vérifie le r
 - [ ] Gestion de la liste blanche (ajout/suppression de services).
 - [ ] Promotion/révocation d'un admin fonctionne.
 - [ ] La modification du buffer est effective immédiatement.
+- [ ] Le panneau des paramètres (Settings) expose les métriques globales du serveur Neon (Compute, DB Storage, Data Transfer) en requêtant console.neon.tech de façon isolée (Server Actions).
+- [ ] L'administrateur peut lancer une purge sur les données de plus de 30 jours (Trajets ou logs).
 - [ ] Le journal d'audit affiche les actions avec pagination et filtres.
 
 ---

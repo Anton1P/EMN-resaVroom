@@ -106,6 +106,7 @@ Chaque erreur fournit un lien vers le trajet conflictuel :
 - **Suppression par le conducteur** : autorisée uniquement si aucun passager SELF. Sinon → contacter un admin.
 - **Modification** : seule l'heure de départ est modifiable. Si passagers SELF → 48h minimum avant le départ.
 - **Admin** : peut tout supprimer/modifier. Notification mail automatique aux impactés.
+- **Nettoyage des données (Data Retention)** : Les administrateurs peuvent purger les trajets et journaux d'audit vieux de plus d'1 mois depuis les paramètres globaux (nettoyage en cascade via Server Actions sécurisées).
 
 ---
 
@@ -131,7 +132,7 @@ Chaque erreur fournit un lien vers le trajet conflictuel :
 | `/admin/vehicles` | CRUD véhicules + maintenance |
 | `/admin/trips` | Gestion des trajets (suppression forcée) |
 | `/admin/users` | Liste blanche services + gestion admins |
-| `/admin/settings` | Configuration du buffer |
+| `/admin/settings` | Configuration globale (buffer de réservation), affichage des métriques serveur (Neon API), purge périodique (Clean Up) de la BDD. |
 | `/admin/audit` | Journal d'audit |
 
 ---
