@@ -1898,20 +1898,23 @@ Toutes les pages admin sont dans le layout `/admin/layout.tsx` qui vérifie le r
 
 **`/admin`** : Dashboard admin avec stats (nombre de trajets actifs, véhicules en maintenance, etc.).
 
-**`/admin/vehicles`** : Table des véhicules avec actions (modifier, passer en maintenance). Formulaire d'ajout.
+**`/admin/vehicles`** : Table des véhicules avec actions (modifier, passer en maintenance). Formulaire d'ajout. Le tableau intègre une scrollbar horizontale au-dessus des entêtes et une double pagination ergonomique.
 
 **`/admin/trips`** : Table de tous les trajets avec recherche/filtres. 
 - Bouton "Modifier" pour modifier toutes les composantes d'un trajet (véhicule, origine, dates, etc.).
 - Bouton "Supprimer" (force delete) avec confirmation modale. 
+- Profite de la barre de scroll haute (`transform: rotateX(180deg)`) pour indiquer clairement le débordement sur les petits écrans. Pagination dédoublée.
 > Notification automatique par mail si des passagers sont impactés (modification ou suppression).
 
 **`/admin/users`** : 
 - Section "Services autorisés" : table + formulaire d'ajout.
 - Section "Administrateurs" : table des admins + recherche email pour promouvoir.
 
-**`/admin/settings`** : Formulaire simple pour modifier le buffer (input numérique + bouton sauvegarder).
+**`/admin/settings`** : 
+- Modificateur global (Buffer time).
+- Gestion de BDD (`DatabaseControls.tsx`) : affichage dynamique des metrics Neon via l'API, avec contrôles de nettoyage des données cibles obsolètes par `Server Action` pour maintenir les instances dans les quotas.
 
-**`/admin/audit`** : Table paginée du journal d'audit avec filtres par type d'action et plage de dates.
+**`/admin/audit`** : Table paginée du journal d'audit avec filtres par type d'action et plage de dates. (Intègre les améliorations ergonomiques de pagination encadrante).
 
 ---
 
